@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { AppError } from "@/lib/errors";
 import { addDays, localDateString } from "@/lib/time";
-import { getStorage } from "@/lib/storage";
+import { getStorage, isStorageConfigured } from "@/lib/storage";
 import { aiModelName, getAIProvider } from "@/modules/ai";
 import { EXTENSION, MAX_IMAGE_BYTES, sniffImageType } from "@/modules/ai/domain/image";
 import { normalizeEstimate, type FoodEstimate } from "@/modules/ai/domain/food-estimate";
@@ -29,6 +29,8 @@ export async function analyzeFoodPhoto(userId: string, input: { bytes: Uint8Arra
 
   const provider = getAIProvider();
   if (!provider) throw new AppError("conflict", "Photo estimates need an Anthropic API key. Add ANTHROPIC_API_KEY to your .env and restart the app.");
+
+  if (!isStorageConfigured()) throw new AppError("conflict", "Photo storage is not set up. Connect Vercel Blob to the project and redeploy.");
 
   const stored = await getStorage().put({
     key: `food-photos/${userId}/${crypto.randomUUID()}.${EXTENSION[mimeType]}`,
@@ -106,5 +108,6 @@ export async function saveAiMeal(userId: string, input: SaveAiMealInput, now: Da
 export async function readFoodPhoto(userId: string, analysisId: string): Promise<{ body: Uint8Array; contentType: string } | null> {
   const analysis = await findAnalysis(userId, analysisId);
   if (!analysis) return null;
-  return getStorage().get(analysis.storageKey);
+  const stored = await getStorage().get(analysis.storageKey);
+  return stored ? { body: stored.body, contentType: analysis.mimeType } : null;
 }

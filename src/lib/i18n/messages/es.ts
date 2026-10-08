@@ -149,6 +149,7 @@ export const es: Messages = {
     signedOut: "Tu sesión se cerró. Inicia sesión de nuevo.",
     tooMany: "Demasiadas solicitudes. Inténtalo en un momento.",
     workoutFinished: "Este entreno ya terminó o ya no existe.",
+    storageNotConfigured: "El almacenamiento de fotos no está configurado. Conecta Vercel Blob al proyecto y vuelve a desplegar.",
   },
   exercise: {
     alsoWorks: " · también {muscles}",

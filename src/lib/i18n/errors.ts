@@ -37,6 +37,7 @@ export const ERROR_KEYS: Readonly<Record<string, MessageKey>> = {
   "Some values are invalid.": "errors.invalid",
   "You are signed out. Sign in again.": "errors.signedOut",
   "Something went wrong. Try again.": "errors.internal",
+  "Photo storage is not set up. Connect Vercel Blob to the project and redeploy.": "errors.storageNotConfigured",
 };
 
 export function translateError(template: string, params: MessageParams, t: Translate): string {

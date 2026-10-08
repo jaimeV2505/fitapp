@@ -147,6 +147,7 @@ export const en = {
     signedOut: "You are signed out. Sign in again.",
     tooMany: "Too many requests. Try again in a moment.",
     workoutFinished: "This workout is already finished or no longer exists.",
+    storageNotConfigured: "Photo storage is not set up. Connect Vercel Blob to the project and redeploy.",
   },
   exercise: {
     alsoWorks: " · also {muscles}",

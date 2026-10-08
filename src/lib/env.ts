@@ -21,6 +21,8 @@ const schema = z.object({
   STORAGE_DRIVER: z.enum(["local", "vercel-blob"]).default("local"),
   LOCAL_STORAGE_DIR: z.string().default("./.data/uploads"),
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  /** Set by Vercel when a Blob store is connected. Current stores authenticate with OIDC and need no token. */
+  BLOB_STORE_ID: z.string().optional(),
   // Set by Vercel.
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
   VERCEL_URL: z.string().optional(),

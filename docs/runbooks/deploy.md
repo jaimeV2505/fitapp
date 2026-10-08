@@ -60,7 +60,7 @@ In Vercel, after importing the project (step 3): **Storage -> Create -> Neon (Po
 | `STORAGE_DRIVER` | `vercel-blob` |
 | `ANTHROPIC_API_KEY` | your key (food photo estimates) |
 | `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5-5` |
-| `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `BLOB_READ_WRITE_TOKEN` | added by the integrations |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `BLOB_STORE_ID` (and `BLOB_READ_WRITE_TOKEN` on older Blob stores) | added by the integrations |
 
 Preview deployments need `DATABASE_URL` (a separate database or Neon branch, never production's) and `BETTER_AUTH_SECRET` to build; they sign in at their own URL automatically.
 
@@ -109,5 +109,6 @@ Two things are never in the zips that accompany a session: `drizzle/` (migration
 | Build fails at `db:migrate:ci` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
 | Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
 | "Invalid origin" on sign-in | You opened an address that is not `BETTER_AUTH_URL` (no trailing slash, `https://`). The app also trusts Vercel's own addresses for the project; set `BETTER_AUTH_URL` to your main domain and redeploy. |
+| Food photo: "Photo storage is not set up" (or a generic "Something went wrong" on older builds) | Vercel Blob is not connected: Storage -> Create -> Blob, connect it to the project (adds `BLOB_STORE_ID`; current stores authenticate with OIDC, no token needed) and redeploy. The app uses `@vercel/blob` 2.6 or newer and works with public and private stores. |
 | Food photo times out | Check `ANTHROPIC_API_KEY`; the page allows 60 s (`maxDuration`). |
 | Photos do not load | `STORAGE_DRIVER=vercel-blob` and a connected Blob store are required in production. |
