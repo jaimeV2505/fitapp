@@ -28,8 +28,16 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/**
+ * Vercel's Postgres integrations (Neon, Supabase...) may name the connection string POSTGRES_URL instead of
+ * DATABASE_URL. Accept either so the deployment works with whatever the integration created.
+ */
+function withProviderAliases(source: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  return { ...source, DATABASE_URL: source.DATABASE_URL ?? source.POSTGRES_URL };
+}
+
 function parseEnv(): Env {
-  const result = schema.safeParse(process.env);
+  const result = schema.safeParse(withProviderAliases(process.env));
   if (!result.success) {
     const details = result.error.issues
       .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
