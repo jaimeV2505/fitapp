@@ -80,11 +80,23 @@ Preview deployments need `DATABASE_URL` (a separate database or Neon branch, nev
 - Backups: use the provider's point-in-time recovery plus a scheduled dump (see `database.md`).
 - Vercel Hobby is for personal, non-commercial use. Move to Pro before charging users.
 
+## Never lose the migrations
+
+The Vercel build needs `drizzle/` (it applies the migrations before publishing). If a commit deletes that folder the deploy fails with `Could not find drizzle/meta/_journal.json`. Protect yourself:
+
+```
+git config core.hooksPath .githooks   # once: blocks a push whose last commit lost the migrations
+pnpm check:migrations                 # or run the check by hand
+```
+
+If it happens: `git checkout $(git log --diff-filter=A --format=%h -n 1 -- drizzle/meta/_journal.json) -- drizzle`, commit and push. Never regenerate a new migration to "fix" it: it would not match the one recorded in the database.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---------|--------------|
 | Build fails with a TypeScript error | Run `docker compose exec app pnpm typecheck` locally and fix it. |
+| `Could not find drizzle/meta/_journal.json` | The commit being built does not contain the `drizzle/` folder. See "Never lose the migrations". |
 | Build fails at `db:check` | The log names the host and the likely cause (wrong password, deleted database, two variables pointing at different databases, unreachable). Fix the variables in Vercel and redeploy. |
 | Build fails at `db:migrate:ci` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
 | Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
