@@ -7,7 +7,8 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NumberField } from "@/components/ui/number-field";
-import { MUSCLE_LABEL } from "@/lib/muscles";
+import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
+import { muscleLabel } from "@/lib/i18n/labels";
 import { ExercisePicker } from "@/modules/exercises/components/exercise-picker";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
 import type { ExerciseListItem } from "@/modules/exercises/types";
@@ -69,49 +70,55 @@ interface RowProps {
 
 function EditorRow({ item, index, count, onChange, onRemove, onSwap, onMove }: RowProps) {
   const controls = useDragControls();
+  const t = useT();
+  const localName = useLocalizedName();
+  const name = localName(item.name);
   return (
     <Reorder.Item value={item} dragListener={false} dragControls={controls} className="rounded-2xl border border-border bg-card p-3" whileDrag={{ scale: 1.02, zIndex: 10 }}>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          aria-label={`Drag to reorder ${item.name}`}
+          aria-label={t("planEditor.drag", { name })}
           onPointerDown={(event) => controls.start(event)}
           className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground active:cursor-grabbing"
         >
           <GripVertical className="size-5" />
         </button>
-        <ExerciseThumb src={item.imageUrl ?? undefined} name={item.name} muscle={item.primaryMuscle} className="size-12" sizes="48px" />
+        <ExerciseThumb src={item.imageUrl ?? undefined} name={name} muscle={item.primaryMuscle} className="size-12" sizes="48px" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{item.name}</p>
-          <p className="truncate text-sm text-muted-foreground">{MUSCLE_LABEL[item.primaryMuscle]}</p>
+          <p className="truncate font-semibold">{name}</p>
+          <p className="truncate text-sm text-muted-foreground">{muscleLabel(t, item.primaryMuscle)}</p>
         </div>
         <div className="flex shrink-0 items-center">
-          <button type="button" onClick={() => onMove(index - 1)} disabled={index === 0} aria-label={`Move ${item.name} up`} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted disabled:opacity-30">
+          <button type="button" onClick={() => onMove(index - 1)} disabled={index === 0} aria-label={t("planEditor.moveUp", { name })} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted disabled:opacity-30">
             <ArrowUp className="size-4" />
           </button>
-          <button type="button" onClick={() => onMove(index + 1)} disabled={index === count - 1} aria-label={`Move ${item.name} down`} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted disabled:opacity-30">
+          <button type="button" onClick={() => onMove(index + 1)} disabled={index === count - 1} aria-label={t("planEditor.moveDown", { name })} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted disabled:opacity-30">
             <ArrowDown className="size-4" />
           </button>
-          <button type="button" onClick={onSwap} aria-label={`Replace ${item.name}`} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
+          <button type="button" onClick={onSwap} aria-label={t("planEditor.replace", { name })} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
             <Repeat className="size-4" />
           </button>
-          <button type="button" onClick={onRemove} aria-label={`Remove ${item.name}`} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
+          <button type="button" onClick={onRemove} aria-label={t("planEditor.remove", { name })} className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted">
             <X className="size-4" />
           </button>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <NumberField label="Sets" decimal={false} value={item.sets} onChange={(v) => onChange({ sets: Math.min(10, Math.max(1, v ?? 1)) })} />
-        <NumberField label="Reps from" decimal={false} value={item.repMin} onChange={(v) => onChange({ repMin: Math.min(100, Math.max(1, v ?? 1)) })} />
-        <NumberField label="Reps to" decimal={false} value={item.repMax} onChange={(v) => onChange({ repMax: Math.min(100, Math.max(1, v ?? 1)) })} />
+        <NumberField label={t("planEditor.sets")} decimal={false} value={item.sets} onChange={(v) => onChange({ sets: Math.min(10, Math.max(1, v ?? 1)) })} />
+        <NumberField label={t("planEditor.repsFrom")} decimal={false} value={item.repMin} onChange={(v) => onChange({ repMin: Math.min(100, Math.max(1, v ?? 1)) })} />
+        <NumberField label={t("planEditor.repsTo")} decimal={false} value={item.repMax} onChange={(v) => onChange({ repMax: Math.min(100, Math.max(1, v ?? 1)) })} />
       </div>
-      {item.repMin > item.repMax ? <p role="alert" className="mt-2 text-sm text-destructive">The minimum cannot be higher than the maximum.</p> : null}
+      {item.repMin > item.repMax ? <p role="alert" className="mt-2 text-sm text-destructive">{t("planEditor.minMax")}</p> : null}
     </Reorder.Item>
   );
 }
 
 export function PlanEditor({ days, todayDayId }: { days: PlanDayDetail[]; todayDayId: string | null }) {
   const router = useRouter();
+  const t = useT();
+  const localName = useLocalizedName();
+  const intl = useIntlLocale();
   const [selectedId, setSelectedId] = useState(days[0]?.id ?? "");
   const [drafts, setDrafts] = useState<Record<string, EditableItem[]>>(() =>
     Object.fromEntries(days.map((day) => [day.id, day.items.map(toEditable)])),
@@ -188,7 +195,7 @@ export function PlanEditor({ days, todayDayId }: { days: PlanDayDetail[]; todayD
         }
         saved += 1;
       }
-      toast.success(saved === 1 ? "Routine saved" : `${saved} days saved`, { description: "Your past workouts keep what you actually did." });
+      toast.success(saved === 1 ? t("planEditor.saved") : t("planEditor.savedDays", { count: saved }), { description: t("planEditor.keepsHistory") });
       router.refresh();
     });
   }
@@ -198,8 +205,8 @@ export function PlanEditor({ days, todayDayId }: { days: PlanDayDetail[]; todayD
       <DayPlates days={days} selectedId={selected.id} todayId={todayDayId} onSelect={setSelectedId} markedIds={dirtyIds} />
 
       <header>
-        <p className="text-sm font-medium text-muted-foreground">{weekdayLabel(selected, true)}</p>
-        <h2 className="display-lg mt-1">{selected.focus}</h2>
+        <p className="text-sm font-medium text-muted-foreground">{weekdayLabel(selected, true, intl)}</p>
+        <h2 className="display-lg mt-1">{localName(selected.focus)}</h2>
       </header>
 
       <Reorder.Group axis="y" values={items} onReorder={setItems} className="flex flex-col gap-2">
@@ -216,19 +223,19 @@ export function PlanEditor({ days, todayDayId }: { days: PlanDayDetail[]; todayD
           />
         ))}
       </Reorder.Group>
-      {items.length === 0 ? <p className="rounded-xl bg-muted/60 px-4 py-6 text-center text-sm text-muted-foreground">A day needs at least one exercise.</p> : null}
+      {items.length === 0 ? <p className="rounded-xl bg-muted/60 px-4 py-6 text-center text-sm text-muted-foreground">{t("planEditor.needOne")}</p> : null}
 
       <Button variant="secondary" onClick={() => setPicker({ mode: "add" })}>
-        <Plus className="size-5" /> Add exercise
+        <Plus className="size-5" /> {t("planEditor.addExercise")}
       </Button>
 
       <div className="pb-safe sticky bottom-24 z-20 md:bottom-4">
         <Button size="lg" className="w-full shadow-card" disabled={dirtyIds.size === 0 || invalid || pending} onClick={saveAll}>
-          {pending ? "Saving…" : dirtyIds.size === 0 ? "No changes" : `Save ${dirtyIds.size === 1 ? "changes" : `${dirtyIds.size} days`}`}
+          {pending ? t("planEditor.saving") : dirtyIds.size === 0 ? t("planEditor.noChanges") : dirtyIds.size === 1 ? t("planEditor.saveChanges") : t("planEditor.saveDays", { count: dirtyIds.size })}
         </Button>
       </div>
 
-      {picker ? <ExercisePicker title={picker.mode === "add" ? "Add exercise" : "Replace exercise"} onPick={pick} onClose={() => setPicker(null)} /> : null}
+      {picker ? <ExercisePicker title={picker.mode === "add" ? t("planEditor.addExercise") : t("planEditor.replaceExercise")} onPick={pick} onClose={() => setPicker(null)} /> : null}
     </div>
   );
 }

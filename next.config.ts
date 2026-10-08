@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    // Import only the icons/components actually used from these packages.
+    optimizePackageImports: ["lucide-react", "recharts", "motion"],
     // Food photos (Phase 2) are validated server-side; keep the action body limit explicit.
     serverActions: { bodySizeLimit: "8mb" },
   },

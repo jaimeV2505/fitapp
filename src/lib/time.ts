@@ -26,15 +26,26 @@ export function hourInTimeZone(date: Date, timeZone: string): number {
   return Number.parseInt(hour, 10) % 24;
 }
 
-export function greetingFor(hour: number): string {
-  if (hour < 5) return "Good night";
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+/** "Mon"/"Monday" (or Lun/Lunes) for an ISO weekday 1..7, in the given language. */
+export function isoWeekdayLabel(weekday: number, style: "short" | "long", locale = "en-US"): string {
+  // 2024-01-01 was a Monday, so day N of January 2024 is ISO weekday N.
+  const date = new Date(Date.UTC(2024, 0, Math.min(7, Math.max(1, weekday))));
+  const label = new Intl.DateTimeFormat(locale, { timeZone: "UTC", weekday: style }).format(date).replace(/\.$/, "");
+  return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1);
 }
 
-export function weekdayName(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(date);
+/** Which greeting to show for an hour of the day (the text itself comes from the translations). */
+export type Greeting = "night" | "morning" | "afternoon" | "evening";
+
+export function greetingFor(hour: number): Greeting {
+  if (hour < 5) return "night";
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+}
+
+export function weekdayName(date: Date, timeZone: string, locale = "en-US"): string {
+  return new Intl.DateTimeFormat(locale, { timeZone, weekday: "long" }).format(date);
 }
 
 /** Add whole days to a YYYY-MM-DD string (calendar arithmetic, timezone independent). */
@@ -60,15 +71,15 @@ export function weekRange(localDate: string, weekStartsOn: number): { start: str
   return { start, end: addDays(start, 6) };
 }
 
-export function formatShortDate(localDate: string): string {
+export function formatShortDate(localDate: string, locale = "en-US"): string {
   const [y, m, d] = localDate.split("-").map(Number);
   const date = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1));
-  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat(locale, { timeZone: "UTC", month: "short", day: "numeric" }).format(date);
 }
 
 /** "Thursday, October 8" for a YYYY-MM-DD string. */
-export function formatLongDate(localDate: string): string {
+export function formatLongDate(localDate: string, locale = "en-US"): string {
   const [y, m, d] = localDate.split("-").map(Number);
   const date = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1));
-  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat(locale, { timeZone: "UTC", weekday: "long", month: "long", day: "numeric" }).format(date);
 }

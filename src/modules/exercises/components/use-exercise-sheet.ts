@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useT } from "@/lib/i18n/client";
 import { getExerciseDetailAction } from "../actions";
 import type { ExerciseDetail } from "../types";
 
@@ -17,12 +18,13 @@ const CLOSED: ExerciseSheetState = { open: false, loading: false, error: null, t
 /** Opens the exercise detail sheet and loads its data on demand (driven by a tap, not an effect). */
 export function useExerciseSheet() {
   const [state, setState] = useState<ExerciseSheetState>(CLOSED);
+  const t = useT();
   const latestRequest = useRef(0);
 
   const show = useCallback((target: { exerciseId: string | null; name: string }) => {
     const request = ++latestRequest.current;
     if (!target.exerciseId) {
-      setState({ open: true, loading: false, error: "Details are not available for this exercise.", title: target.name, detail: null });
+      setState({ open: true, loading: false, error: t("exercise.detailsUnavailable"), title: target.name, detail: null });
       return;
     }
     setState({ open: true, loading: true, error: null, title: target.name, detail: null });
@@ -34,7 +36,7 @@ export function useExerciseSheet() {
           : { ...current, loading: false, error: result.error },
       );
     });
-  }, []);
+  }, [t]);
 
   const setOpen = useCallback((open: boolean) => {
     setState((current) => ({ ...current, open }));

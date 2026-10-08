@@ -28,6 +28,8 @@ pnpm test:e2e             # Playwright against the running app (see docs/runbook
 
 ## Conventions
 
+- UI text: never hard-code user-visible strings. Use `t("namespace.key")` (`useT()` client, `getT()` server) and add the key to both `messages/en.ts` and `messages/es.ts` (see `docs/i18n.md`). Dates/numbers take the locale.
+
 - Motion: import from `motion/react`, take every duration/spring/variant from `src/lib/motion` (see `docs/motion.md`). GSAP only for multi-step timelines. Always keep feedback visible under reduced motion.
 
 - Strict TypeScript with `noUncheckedIndexedAccess`.

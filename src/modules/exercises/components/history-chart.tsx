@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useIntlLocale, useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
 import { useMotionSafe } from "@/lib/motion";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatShortDate } from "@/lib/time";
@@ -9,10 +11,10 @@ import type { ExerciseHistoryPoint } from "../types";
 
 type Metric = "weight" | "e1rm" | "volume";
 
-const METRICS: { value: Metric; label: string; unit: string }[] = [
-  { value: "weight", label: "Top weight", unit: "kg" },
-  { value: "e1rm", label: "Est. 1RM", unit: "kg" },
-  { value: "volume", label: "Volume", unit: "kg" },
+const METRICS: { value: Metric; label: MessageKey; unit: string }[] = [
+  { value: "weight", label: "exercise.topWeight", unit: "kg" },
+  { value: "e1rm", label: "exercise.est1rm", unit: "kg" },
+  { value: "volume", label: "exercise.volume", unit: "kg" },
 ];
 
 function valueOf(point: ExerciseHistoryPoint, metric: Metric): number | null {
@@ -24,13 +26,15 @@ function valueOf(point: ExerciseHistoryPoint, metric: Metric): number | null {
 export function HistoryChart({ points }: { points: readonly ExerciseHistoryPoint[] }) {
   const [metric, setMetric] = useState<Metric>("weight");
   const { reduced } = useMotionSafe();
+  const t = useT();
+  const intl = useIntlLocale();
   const active = METRICS.find((m) => m.value === metric) ?? METRICS[0]!;
-  const data = points.map((point) => ({ label: formatShortDate(point.localDate), value: valueOf(point, metric) }));
+  const data = points.map((point) => ({ label: formatShortDate(point.localDate, intl), value: valueOf(point, metric) }));
   const plottable = data.filter((d) => d.value !== null).length;
 
   return (
     <div className="flex flex-col gap-3">
-      <div role="radiogroup" aria-label="Chart metric" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+      <div role="radiogroup" aria-label={t("exercise.chartMetric")} className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
         {METRICS.map((option) => (
           <button
             key={option.value}
@@ -43,14 +47,14 @@ export function HistoryChart({ points }: { points: readonly ExerciseHistoryPoint
               metric === option.value ? "bg-card text-foreground shadow-card" : "text-muted-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
 
       {plottable < 2 ? (
         <p className="rounded-2xl bg-muted/60 px-4 py-6 text-center text-sm text-muted-foreground">
-          Finish this exercise in two workouts to see your trend.
+          {t("exercise.needTwo")}
         </p>
       ) : (
         <div className="h-48 w-full">
@@ -73,7 +77,7 @@ export function HistoryChart({ points }: { points: readonly ExerciseHistoryPoint
                   borderRadius: 12,
                   color: "var(--foreground)",
                 }}
-                formatter={(value) => [`${value} ${active.unit}`, active.label]}
+                formatter={(value) => [`${value} ${active.unit}`, t(active.label)]}
               />
               <Line
                 type="monotone"

@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/db";
 import { account, session, user, verification } from "@/lib/db/schema";
-import { appUrl, env } from "@/lib/env";
+import { appUrl, env, trustedOrigins } from "@/lib/env";
 
 /**
  * Better Auth (the maintained successor to Auth.js). Users live in our own Postgres.
@@ -11,6 +11,7 @@ import { appUrl, env } from "@/lib/env";
  */
 export const auth = betterAuth({
   baseURL: appUrl,
+  trustedOrigins,
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",

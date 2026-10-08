@@ -55,9 +55,15 @@ Last updated: 2026-10-08 (session 6)
 - Deploy runbook `docs/runbooks/deploy.md` (GitHub private repo -> Vercel + Neon + Blob). `vercel.json` uses `scripts/vercel-build.sh`: production builds migrate and seed first, previews never touch a database. Migrations use `DATABASE_URL_UNPOOLED` when present. Preview deployments sign in at their own URL (`appUrl`). `maxDuration = 60` on the nutrition page for photo estimates.
 - Open item: the whole project has never been type-checked by `tsc` (no network where it was written). Run `docker compose exec app pnpm typecheck` and `pnpm lint` before the first push; Vercel's `next build` fails on type errors.
 
+## Session 8: performance and Spanish (written; run typecheck/lint/test before pushing)
+
+- **Performance**: per-request cache of user settings, no account re-check per request, Home streams its cards with Suspense, exercise photos from jsDelivr, lazy recharts / detail sheet, `optimizePackageImports`. `vercel.json` no longer pins a function region: set it in Vercel to match the Neon region (most likely cause of slowness). See `docs/runbooks/performance.md`.
+- **Spanish** (`docs/i18n.md`): own i18n module (typed dictionaries, ICU plurals, cookie, switcher on Profile and sign-in), ~430 messages, localized dates/numbers, server errors translated, Spanish names for the routine/foods/templates. Exercise instructions and the extended library names stay English.
+- Progression reasons are now structured (key + params) instead of English sentences.
+
 ## Verified
 
-- Pure code compiled with TypeScript strict + `noUncheckedIndexedAccess` and unit tests run (88 tests: blueprint, metrics, formatting, prefill, logger state, persistent queue, sync engine, time helpers, exercise history, week filling).
+- Pure code compiled with TypeScript strict + `noUncheckedIndexedAccess` and unit tests run (116 tests: blueprint, metrics, formatting, prefill, logger state, persistent queue, sync engine, time helpers, exercise history, week filling).
 
 ## NOT verified (authoring sandbox had no network)
 

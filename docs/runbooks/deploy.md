@@ -21,7 +21,8 @@ cd ~/Downloads/fitapp
 git init -b main
 git add .
 git ls-files | grep -E '(^|/)\.env($|\.)'      # must print only .env.example
-git ls-files | grep -E '^(backups|node_modules|\.data)/' # must print nothing
+git ls-files | grep -E '^(backups|node_modules|\.data|\.pnpm-store|\.next)/' # must print nothing
+git ls-tree -r --name-only HEAD | cut -d/ -f1 | sort | uniq -c | sort -rn | head   # sanity: top-level folders and file counts
 git commit -m "Initial commit"
 ```
 
@@ -42,7 +43,7 @@ The CI workflow (`.github/workflows/ci.yml`) starts running on that first push.
 
 ## 2. Database
 
-In Vercel, after importing the project (step 3): **Storage -> Create -> Neon (Postgres)** and connect it to the project. Pick a region near your functions (the project asks for `arn1`, Stockholm). It adds `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct). Migrations use the unpooled one automatically.
+In Vercel, after importing the project (step 3): **Storage -> Create -> Neon (Postgres)** and connect it to the project. Pick the same region for the functions and the database (Settings -> Functions -> Function Region); mismatched regions make every page slow. See `performance.md`. It adds the connection strings, named either `DATABASE_URL` / `DATABASE_URL_UNPOOLED` or `POSTGRES_URL` / `POSTGRES_URL_NON_POOLING` depending on the integration settings. The app and migrations accept both; migrations prefer the direct (unpooled) one.
 
 ## 3. Vercel project
 
@@ -86,6 +87,6 @@ Preview deployments need `DATABASE_URL` (a separate database or Neon branch, nev
 | Build fails with a TypeScript error | Run `docker compose exec app pnpm typecheck` locally and fix it. |
 | Build fails at `db:migrate` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
 | Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
-| Sign-in loops or "invalid origin" | `BETTER_AUTH_URL` does not match the address you open. |
+| "Invalid origin" on sign-in | You opened an address that is not `BETTER_AUTH_URL` (no trailing slash, `https://`). The app also trusts Vercel's own addresses for the project; set `BETTER_AUTH_URL` to your main domain and redeploy. |
 | Food photo times out | Check `ANTHROPIC_API_KEY`; the page allows 60 s (`maxDuration`). |
 | Photos do not load | `STORAGE_DRIVER=vercel-blob` and a connected Blob store are required in production. |

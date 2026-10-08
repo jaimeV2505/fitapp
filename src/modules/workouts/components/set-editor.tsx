@@ -5,6 +5,7 @@ import { ArrowUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import { spring, useHaptics } from "@/lib/motion";
 import { prefillDraft, weightStepFor, type SetDraft } from "../domain/prefill";
 import type { ExerciseSessionView, SetView } from "../types";
@@ -31,6 +32,7 @@ interface SetEditorProps {
 export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion = null }: SetEditorProps) {
   const [draft, setDraft] = useState<SetDraft>(() => prefillDraft(exercise, set));
   const haptic = useHaptics();
+  const t = useT();
   const editing = set.completed;
   const isLastTargetSet = set.setNumber === exercise.targetSets;
   const canSave = draft.reps !== null && draft.reps > 0;
@@ -38,14 +40,14 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between">
-        <p className="display-md">Set {set.setNumber}</p>
+        <p className="display-md">{t("editor.set", { n: set.setNumber })}</p>
         {exercise.allowFailureOnLastSet && isLastTargetSet ? (
-          <p className="text-sm text-muted-foreground">Last set: technical failure is fine</p>
+          <p className="text-sm text-muted-foreground">{t("editor.lastSetFailure")}</p>
         ) : null}
       </div>
 
       <NumberStepper
-        label="Weight"
+        label={t("editor.weight")}
         unit="kg"
         decimal
         value={draft.weightKg}
@@ -59,11 +61,11 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
           onClick={() => setDraft((d) => ({ ...d, weightKg: suggestion.toKg }))}
           className="-mt-2 flex items-center gap-2 self-start rounded-full bg-success-soft px-3 py-1.5 text-sm font-semibold text-success"
         >
-          <ArrowUp className="size-4" /> Try {suggestion.toKg} kg (from {suggestion.fromKg})
+          <ArrowUp className="size-4" /> {t("editor.try", { to: suggestion.toKg, from: suggestion.fromKg })}
         </button>
       ) : null}
       <NumberStepper
-        label="Reps"
+        label={t("editor.reps")}
         value={draft.reps}
         step={1}
         max={200}
@@ -72,12 +74,12 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
 
       <div>
         <p className="mb-1.5 text-sm font-medium text-muted-foreground">
-          Reps in reserve{" "}
+          {t("editor.rir")}{" "}
           <span className="font-normal">
-            (target {exercise.rirMin === exercise.rirMax ? exercise.rirMin : `${exercise.rirMin}\u2013${exercise.rirMax}`})
+            {t("editor.rirTarget", { value: exercise.rirMin === exercise.rirMax ? exercise.rirMin : `${exercise.rirMin}\u2013${exercise.rirMax}` })}
           </span>
         </p>
-        <div role="radiogroup" aria-label="Reps in reserve" className="grid grid-cols-5 gap-2">
+        <div role="radiogroup" aria-label={t("editor.rir")} className="grid grid-cols-5 gap-2">
           {RIR_OPTIONS.map((option) => {
             const selected = draft.rir === option;
             const inTarget = option >= exercise.rirMin && option <= exercise.rirMax;
@@ -116,19 +118,19 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
           onSave(draft);
         }}
       >
-        {editing ? "Update set" : "Complete set"}
+        {editing ? t("editor.update") : t("editor.complete")}
       </Button>
 
       {editing ? (
         <div className="flex gap-2">
           {onUndo ? (
             <Button variant="secondary" size="sm" className="flex-1" onClick={onUndo}>
-              Mark as not done
+              {t("editor.markUndone")}
             </Button>
           ) : null}
           {onCancel ? (
             <Button variant="ghost" size="sm" className="flex-1" onClick={onCancel}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           ) : null}
         </div>

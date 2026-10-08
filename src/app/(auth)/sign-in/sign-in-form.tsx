@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
+import { useT } from "@/lib/i18n/client";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -12,6 +13,7 @@ const fieldClass =
 
 export function SignInForm({ allowSignup }: { allowSignup: boolean }) {
   const router = useRouter();
+  const t = useT();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -28,9 +30,9 @@ export function SignInForm({ allowSignup }: { allowSignup: boolean }) {
       const result =
         mode === "sign-in"
           ? await authClient.signIn.email({ email, password })
-          : await authClient.signUp.email({ email, password, name: name || email.split("@")[0] || "Athlete" });
+          : await authClient.signUp.email({ email, password, name: name || email.split("@")[0] || t("auth.defaultName") });
       if (result.error) {
-        setError(result.error.message ?? "Could not sign you in. Check your details and try again.");
+        setError(result.error.message ?? t("auth.failed"));
         return;
       }
       router.replace("/");
@@ -41,16 +43,16 @@ export function SignInForm({ allowSignup }: { allowSignup: boolean }) {
   return (
     <form onSubmit={onSubmit} className="mt-10 flex flex-col gap-3">
       {mode === "sign-up" ? (
-        <input name="name" type="text" autoComplete="name" placeholder="Name" className={fieldClass} />
+        <input name="name" type="text" autoComplete="name" placeholder={t("auth.name")} className={fieldClass} />
       ) : null}
-      <input name="email" type="email" required autoComplete="email" placeholder="Email" className={fieldClass} />
+      <input name="email" type="email" required autoComplete="email" placeholder={t("auth.email")} className={fieldClass} />
       <input
         name="password"
         type="password"
         required
         minLength={10}
         autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-        placeholder={mode === "sign-up" ? "Password (at least 10 characters)" : "Password"}
+        placeholder={mode === "sign-up" ? t("auth.passwordNew") : t("auth.password")}
         className={fieldClass}
       />
       {error ? (
@@ -59,7 +61,7 @@ export function SignInForm({ allowSignup }: { allowSignup: boolean }) {
         </p>
       ) : null}
       <Button type="submit" size="lg" disabled={pending} className="mt-2">
-        {pending ? "One moment…" : mode === "sign-in" ? "Sign in" : "Create account"}
+        {pending ? t("auth.oneMoment") : mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
       </Button>
       {allowSignup ? (
         <Button
@@ -70,7 +72,7 @@ export function SignInForm({ allowSignup }: { allowSignup: boolean }) {
             setError(null);
           }}
         >
-          {mode === "sign-in" ? "Create an account" : "I already have an account"}
+          {mode === "sign-in" ? t("auth.createAnAccount") : t("auth.haveAccount")}
         </Button>
       ) : null}
     </form>

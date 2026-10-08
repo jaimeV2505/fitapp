@@ -25,9 +25,9 @@ export function AnimatedNumber({ value, suffix, decimals = 0, className }: Anima
 }
 
 /** Counts up from zero once when it first appears (summary screens). */
-export function CountUp({ value, suffix = "", className }: { value: number; suffix?: string; className?: string }) {
+export function CountUp({ value, suffix = "", className, locale = "en-US" }: { value: number; suffix?: string; className?: string; locale?: string }) {
   const motionValue = useMotionValue(0);
-  const text = useTransform(motionValue, (latest) => `${Math.round(latest).toLocaleString("en-US")}${suffix}`);
+  const text = useTransform(motionValue, (latest) => `${Math.round(latest).toLocaleString(locale)}${suffix}`);
 
   useEffect(() => {
     const controls = animate(motionValue, value, { duration: 0.9, ease: "easeOut" });

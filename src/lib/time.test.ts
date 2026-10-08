@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, greetingFor, isoWeekday, isoWeekdayOfLocalDate, localDateString, weekRange } from "./time";
+import { addDays, formatLongDate, formatShortDate, greetingFor, isoWeekdayLabel, isoWeekday, isoWeekdayOfLocalDate, localDateString, weekRange } from "./time";
 
 describe("time helpers", () => {
   it("uses the user's timezone for the calendar date", () => {
@@ -26,8 +26,22 @@ describe("time helpers", () => {
   });
 
   it("chooses a greeting by hour", () => {
-    expect(greetingFor(8)).toBe("Good morning");
-    expect(greetingFor(15)).toBe("Good afternoon");
-    expect(greetingFor(20)).toBe("Good evening");
+    expect(greetingFor(8)).toBe("morning");
+    expect(greetingFor(15)).toBe("afternoon");
+    expect(greetingFor(20)).toBe("evening");
+    expect(greetingFor(2)).toBe("night");
+  });
+
+  it("formats dates in the requested language", () => {
+    expect(formatShortDate("2026-10-08", "en-US")).toBe("Oct 8");
+    expect(formatShortDate("2026-10-08", "es-ES")).toMatch(/8 oct/);
+    expect(formatLongDate("2026-10-08", "es-ES")).toMatch(/jueves/i);
+  });
+
+  it("names ISO weekdays in either language", () => {
+    expect(isoWeekdayLabel(1, "long", "en-US")).toBe("Monday");
+    expect(isoWeekdayLabel(3, "short", "en-US")).toBe("Wed");
+    expect(isoWeekdayLabel(1, "long", "es-ES")).toBe("Lunes");
+    expect(isoWeekdayLabel(7, "long", "es-ES")).toBe("Domingo");
   });
 });

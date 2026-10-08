@@ -1,20 +1,5 @@
 import type { MuscleGroup } from "@/lib/db/schema/enums";
 
-export const MUSCLE_LABEL: Record<MuscleGroup, string> = {
-  chest: "Chest",
-  back: "Back",
-  shoulders: "Shoulders",
-  biceps: "Biceps",
-  triceps: "Triceps",
-  forearms: "Forearms",
-  quads: "Quads",
-  hamstrings: "Hamstrings",
-  glutes: "Glutes",
-  calves: "Calves",
-  adductors: "Adductors",
-  core: "Core",
-};
-
 /**
  * Muscle ids used by react-body-highlighter. One of our groups can cover several of its regions
  * (e.g. shoulders = front and rear deltoids; back = upper back and traps).

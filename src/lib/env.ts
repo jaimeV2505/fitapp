@@ -24,6 +24,7 @@ const schema = z.object({
   // Set by Vercel.
   VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
   VERCEL_URL: z.string().optional(),
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -65,6 +66,18 @@ export const env: Env = parseEnv();
 
 /**
  * Public base URL of this deployment. Production and local use BETTER_AUTH_URL; every Vercel preview has its
- * own address, so sign-in works there too.
+ * own address, so sign-in works there too. A trailing slash is ignored.
  */
-export const appUrl: string = env.VERCEL_ENV === "preview" && env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.BETTER_AUTH_URL;
+export const appUrl: string = (env.VERCEL_ENV === "preview" && env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.BETTER_AUTH_URL).replace(/\/+$/, "");
+
+/**
+ * Origins the sign-in system accepts requests from. Besides the configured URL, the addresses Vercel assigns to
+ * this very project (production domain and the current deployment), so opening the site from any of them works.
+ */
+export const trustedOrigins: string[] = [
+  ...new Set(
+    [appUrl, env.VERCEL_PROJECT_PRODUCTION_URL && `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`, env.VERCEL_URL && `https://${env.VERCEL_URL}`].filter(
+      (origin): origin is string => Boolean(origin),
+    ),
+  ),
+];

@@ -1,12 +1,13 @@
 "use client";
 
 import { Drawer } from "vaul";
+import { LazyHistoryChart } from "@/components/lazy-charts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIntlLocale, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import type { ExerciseDetail } from "../types";
 import type { ExerciseSheetState } from "./use-exercise-sheet";
 import { ExerciseGallery } from "./exercise-gallery";
-import { HistoryChart } from "./history-chart";
 import { MuscleMap } from "./muscle-map";
 
 function kg(value: number | null): string {
@@ -23,6 +24,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function Body({ detail }: { detail: ExerciseDetail }) {
+  const t = useT();
+  const intl = useIntlLocale();
   const last = detail.history[detail.history.length - 1];
   return (
     <div className="flex flex-col gap-6">
@@ -32,28 +35,32 @@ function Body({ detail }: { detail: ExerciseDetail }) {
 
       <section aria-labelledby="records-heading" className="flex flex-col gap-3">
         <h3 id="records-heading" className="text-lg font-semibold">
-          Your numbers
+          {t("exercise.yourNumbers")}
         </h3>
         <div className="grid grid-cols-3 gap-2">
-          <Stat label="Heaviest" value={kg(detail.records.maxWeightKg)} />
-          <Stat label="Est. 1RM" value={kg(detail.records.bestEstimated1RmKg)} />
-          <Stat label="Best volume" value={kg(detail.records.bestSessionVolumeKg)} />
+          <Stat label={t("exercise.heaviest")} value={kg(detail.records.maxWeightKg)} />
+          <Stat label={t("exercise.est1rm")} value={kg(detail.records.bestEstimated1RmKg)} />
+          <Stat label={t("exercise.bestVolume")} value={kg(detail.records.bestSessionVolumeKg)} />
         </div>
         {last ? (
           <p className="text-sm text-muted-foreground">
-            Last time ({formatShortDate(last.localDate)}): {kg(last.topWeightKg)}
-            {last.repsAtTopWeight !== null ? ` × ${last.repsAtTopWeight}` : ""} · {last.sets} sets
+            {t("exercise.lastTime", {
+              date: formatShortDate(last.localDate, intl),
+              weight: kg(last.topWeightKg),
+              reps: last.repsAtTopWeight !== null ? ` × ${last.repsAtTopWeight}` : "",
+              sets: last.sets,
+            })}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">No finished workouts with this exercise yet.</p>
+          <p className="text-sm text-muted-foreground">{t("exercise.noHistory")}</p>
         )}
-        <HistoryChart points={detail.history} />
+        <LazyHistoryChart points={detail.history} />
       </section>
 
       {detail.instructions.length > 0 ? (
         <section aria-labelledby="how-heading" className="flex flex-col gap-3">
           <h3 id="how-heading" className="text-lg font-semibold">
-            How to do it
+            {t("exercise.howTo")}
           </h3>
           <ol className="flex list-decimal flex-col gap-2 pl-5 text-[0.95rem] leading-relaxed marker:font-semibold marker:text-muted-foreground">
             {detail.instructions.map((step) => (

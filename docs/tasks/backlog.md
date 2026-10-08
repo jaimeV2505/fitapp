@@ -9,6 +9,9 @@
 6. Onboarding and billing (only when opening to others)
 
 ## Phase 1
+- [ ] Verify region match (Neon vs. Vercel functions) and measure again
+- [ ] Store the language in the user's settings (cross-device) instead of only a cookie
+- [ ] Translate exercise instructions / library names (or add an AI translation cache)
 - [ ] Motion phase 2: nutrition AI loading/results, animated charts, Progress/Body/Plan editor, Home (see docs/motion.md)
 - [ ] Run `pnpm media:library` + `pnpm db:seed` to load the full exercise library
 - [ ] Edit a saved meal (amounts, foods) instead of delete + re-log

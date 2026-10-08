@@ -117,12 +117,9 @@ export interface WeekProgress {
   target: number;
 }
 
-export async function getWeekProgress(
-  userId: string,
-  settings: UserSettingsView,
-  localDate: string,
-): Promise<WeekProgress> {
-  const { start, end } = weekRange(localDate, settings.weekStartsOn);
+export async function getWeekProgress(userId: string, now: Date = new Date()): Promise<WeekProgress> {
+  const settings = await getUserSettings(userId);
+  const { start, end } = weekRange(localDateString(now, settings.timezone), settings.weekStartsOn);
   return { completed: await countCompletedSessions(userId, start, end), target: settings.weeklyWorkoutTarget };
 }
 

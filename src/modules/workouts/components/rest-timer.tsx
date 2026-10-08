@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/client";
 import { spring } from "@/lib/motion";
 import { formatDuration } from "../domain/format";
 
@@ -23,6 +24,7 @@ interface RestTimerProps {
 
 /** Floating countdown shown after each completed set. Uses wall-clock time, so it stays correct if the tab sleeps. */
 export function RestTimer({ rest, onAddSeconds, onDismiss }: RestTimerProps) {
+  const t = useT();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function RestTimer({ rest, onAddSeconds, onDismiss }: RestTimerProps) {
     >
       <div className="flex items-center gap-3 p-3 pl-5">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-muted-foreground">{finished ? "Rest is over" : "Rest"}</p>
+          <p className="truncate text-xs font-medium text-muted-foreground">{finished ? t("rest.over") : t("rest.rest")}</p>
           <motion.p
             className={`font-display tnum text-5xl font-bold leading-none transition-colors ${finished ? "text-success" : ""}`}
             // When the rest is over the time gives two gentle beats, then settles.
@@ -64,11 +66,11 @@ export function RestTimer({ rest, onAddSeconds, onDismiss }: RestTimerProps) {
             {formatDuration(Math.ceil(remainingMs / 1000))}
           </motion.p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => onAddSeconds(15)} aria-label="Add 15 seconds">
-          +15s
+        <Button variant="secondary" size="sm" onClick={() => onAddSeconds(15)} aria-label={t("rest.add15")}>
+          {t("rest.add15short")}
         </Button>
         <Button variant={finished ? "primary" : "ghost"} size="sm" onClick={onDismiss}>
-          {finished ? "Next set" : "Skip"}
+          {finished ? t("rest.nextSet") : t("rest.skip")}
         </Button>
       </div>
       <div className="h-1 w-full bg-muted">

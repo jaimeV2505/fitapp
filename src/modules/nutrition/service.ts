@@ -47,7 +47,7 @@ export async function logMeal(userId: string, input: LogMealInput, now: Date = n
     const food = await findVisibleFood(userId, entry.foodId);
     if (!food) throw new AppError("not_found", "One of the foods no longer exists. Pick it again.");
     const grams = gramsFor(food, entry.quantity, entry.unit);
-    if (grams === null) throw new AppError("validation", `${food.name} has no piece size. Use grams instead, or set a piece size on the food.`);
+    if (grams === null) throw new AppError("validation", "{name} has no piece size. Use grams instead, or set a piece size on the food.", { name: food.name });
     items.push({
       foodId: food.id,
       name: food.name,

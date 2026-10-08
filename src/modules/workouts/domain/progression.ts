@@ -1,3 +1,5 @@
+import type { MessageKey } from "@/lib/i18n/types";
+
 export interface ProgressionSet {
   weightKg: number | null;
   reps: number | null;
@@ -16,10 +18,16 @@ export interface ProgressionInput {
   previous: readonly ProgressionSet[];
 }
 
+/** Why the suggestion was made: a translation key plus its numbers, so the UI can say it in any language. */
+export interface Reason {
+  key: MessageKey;
+  params: Record<string, number>;
+}
+
 export type Progression =
-  | { kind: "increase"; fromKg: number; toKg: number; reason: string }
-  | { kind: "hold"; weightKg: number; reason: string }
-  | { kind: "build"; weightKg: number; targetReps: number; reason: string };
+  | { kind: "increase"; fromKg: number; toKg: number; reason: Reason }
+  | { kind: "hold"; weightKg: number; reason: Reason }
+  | { kind: "build"; weightKg: number; targetReps: number; reason: Reason };
 
 const round05 = (value: number): number => Math.round(value * 2) / 2;
 
@@ -45,14 +53,14 @@ export function suggestProgression(input: ProgressionInput): Progression | null 
       return {
         kind: "hold",
         weightKg: topWeight,
-        reason: `You hit ${input.repMax} reps but very close to failure. Repeat ${topWeight} kg with a rep or two in reserve first.`,
+        reason: { key: "progression.hold", params: { reps: input.repMax, kg: topWeight } },
       };
     }
     return {
       kind: "increase",
       fromKg: topWeight,
       toKg: round05(topWeight + input.stepKg),
-      reason: `You reached ${input.repMax} reps on every set last time.`,
+      reason: { key: "progression.increase", params: { reps: input.repMax } },
     };
   }
 
@@ -62,6 +70,6 @@ export function suggestProgression(input: ProgressionInput): Progression | null 
     kind: "build",
     weightKg: topWeight,
     targetReps,
-    reason: `Stay at ${topWeight} kg and aim for ${targetReps}+ reps on every set before going heavier.`,
+    reason: { key: "progression.build", params: { kg: topWeight, reps: targetReps } },
   };
 }

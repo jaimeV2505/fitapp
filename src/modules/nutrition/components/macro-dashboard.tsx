@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Meter } from "@/components/ui/meter";
 import { ProgressRing } from "@/components/ui/progress-ring";
+import { useT } from "@/lib/i18n/client";
 import { percentOf, type Macros } from "../domain/macros";
 import type { NutritionTargets } from "../types";
 import { TargetsSheet } from "./targets-sheet";
@@ -17,6 +18,7 @@ interface MacroDashboardProps {
 
 export function MacroDashboard({ totals, targets }: MacroDashboardProps) {
   const [editing, setEditing] = useState(false);
+  const t = useT();
   const percent = percentOf(totals.calories, targets.calories);
   const hasAnyTarget = Object.values(targets).some((value) => value !== null);
 
@@ -30,7 +32,7 @@ export function MacroDashboard({ totals, targets }: MacroDashboardProps) {
           </div>
         </ProgressRing>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground">Calories</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("nutrition.calories")}</p>
           <p className="display-lg mt-1">
             {targets.calories ? (
               <>
@@ -42,20 +44,20 @@ export function MacroDashboard({ totals, targets }: MacroDashboardProps) {
           </p>
           {targets.calories && percent !== null ? (
             <p className="mt-1 text-sm text-muted-foreground">
-              {percent >= 100 ? `${Math.round(totals.calories - targets.calories)} kcal over target` : `${Math.round(targets.calories - totals.calories)} kcal left`}
+              {percent >= 100 ? t("nutrition.kcalOver", { kcal: Math.round(totals.calories - targets.calories) }) : t("nutrition.kcalLeft", { kcal: Math.round(targets.calories - totals.calories) })}
             </p>
           ) : null}
         </div>
       </div>
 
       <div className="mt-6 flex flex-col gap-4">
-        <Meter label="Protein" value={totals.protein} target={targets.protein} unit="g" barClassName="bg-plate-blue" />
-        <Meter label="Carbs" value={totals.carbs} target={targets.carbs} unit="g" barClassName="bg-plate-yellow" />
-        <Meter label="Fat" value={totals.fat} target={targets.fat} unit="g" barClassName="bg-plate-red" />
+        <Meter label={t("nutrition.protein")} value={totals.protein} target={targets.protein} unit="g" barClassName="bg-plate-blue" />
+        <Meter label={t("nutrition.carbs")} value={totals.carbs} target={targets.carbs} unit="g" barClassName="bg-plate-yellow" />
+        <Meter label={t("nutrition.fat")} value={totals.fat} target={targets.fat} unit="g" barClassName="bg-plate-red" />
       </div>
 
       <Button variant="secondary" size="sm" className="mt-5" onClick={() => setEditing(true)}>
-        {hasAnyTarget ? "Edit targets" : "Set daily targets"}
+        {hasAnyTarget ? t("nutrition.editTargets") : t("nutrition.setTargets")}
       </Button>
       {editing ? <TargetsSheet open={editing} onOpenChange={setEditing} targets={targets} /> : null}
     </Card>

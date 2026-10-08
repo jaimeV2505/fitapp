@@ -6,16 +6,19 @@ import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authClient } from "@/lib/auth/client";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n/types";
 import { cn } from "@/lib/utils";
 
-const THEMES = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-] as const;
+const THEMES: { value: string; label: MessageKey }[] = [
+  { value: "system", label: "profile.system" },
+  { value: "light", label: "profile.light" },
+  { value: "dark", label: "profile.dark" },
+];
 
 export function ProfileActions() {
   const router = useRouter();
+  const t = useT();
   const { theme, setTheme } = useTheme();
   // next-themes only knows the stored theme on the client; avoid a hydration mismatch.
   const mounted = useSyncExternalStore(
@@ -35,8 +38,8 @@ export function ProfileActions() {
   return (
     <>
       <Card className="p-6">
-        <p className="mb-3 font-semibold">Appearance</p>
-        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-2 rounded-2xl bg-muted p-1">
+        <p className="mb-3 font-semibold">{t("profile.appearance")}</p>
+        <div role="radiogroup" aria-label={t("profile.theme")} className="grid grid-cols-3 gap-2 rounded-2xl bg-muted p-1">
           {THEMES.map((option) => {
             const selected = mounted && theme === option.value;
             return (
@@ -51,14 +54,14 @@ export function ProfileActions() {
                   selected ? "bg-card text-foreground shadow-card" : "text-muted-foreground",
                 )}
               >
-                {option.label}
+                {t(option.label)}
               </button>
             );
           })}
         </div>
       </Card>
       <Button variant="secondary" size="lg" onClick={signOut} disabled={signingOut}>
-        {signingOut ? "Signing out…" : "Sign out"}
+        {signingOut ? t("profile.signingOut") : t("profile.signOut")}
       </Button>
     </>
   );

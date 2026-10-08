@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NumberField } from "@/components/ui/number-field";
 import { Sheet } from "@/components/ui/sheet";
+import { useT } from "@/lib/i18n/client";
 import { logMeasurementAction } from "../actions";
 
 interface Draft {
@@ -22,6 +23,7 @@ const EMPTY: Draft = { weightKg: null, bodyFatPercent: null, waistCm: null, ches
 
 export function LogMeasurementButton({ lastWeightKg }: { lastWeightKg: number | null }) {
   const router = useRouter();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [more, setMore] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -34,7 +36,7 @@ export function LogMeasurementButton({ lastWeightKg }: { lastWeightKg: number | 
     startTransition(async () => {
       const result = await logMeasurementAction(draft);
       if (!result.ok) return setError(result.error);
-      toast.success("Saved");
+      toast.success(t("body.saved"));
       setOpen(false);
       router.refresh();
     });
@@ -52,12 +54,12 @@ export function LogMeasurementButton({ lastWeightKg }: { lastWeightKg: number | 
           setOpen(true);
         }}
       >
-        <Plus className="size-6" /> Log weight
+        <Plus className="size-6" /> {t("body.logWeight")}
       </Button>
       <Sheet
         open={open}
         onOpenChange={setOpen}
-        title="Log body data"
+        title={t("body.logTitle")}
         footer={
           <div className="flex flex-col gap-2">
             {error ? (
@@ -66,23 +68,23 @@ export function LogMeasurementButton({ lastWeightKg }: { lastWeightKg: number | 
               </p>
             ) : null}
             <Button size="lg" onClick={save} disabled={pending || !hasAny}>
-              {pending ? "Saving…" : "Save"}
+              {pending ? t("body.saving") : t("body.save")}
             </Button>
           </div>
         }
       >
         <div className="flex flex-col gap-4">
-          <NumberField label="Body weight" suffix="kg" value={draft.weightKg} onChange={(weightKg) => setDraft((d) => ({ ...d, weightKg }))} placeholder={lastWeightKg ? String(lastWeightKg) : "0"} />
+          <NumberField label={t("body.bodyWeight")} suffix="kg" value={draft.weightKg} onChange={(weightKg) => setDraft((d) => ({ ...d, weightKg }))} placeholder={lastWeightKg ? String(lastWeightKg) : "0"} />
           <button type="button" onClick={() => setMore((m) => !m)} className="text-left text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline">
-            {more ? "Hide measurements" : "Add measurements (waist, arm, chest, leg, body fat)"}
+            {more ? t("body.hideMeasures") : t("body.addMeasures")}
           </button>
           {more ? (
             <div className="grid grid-cols-2 gap-3">
-              <NumberField label="Waist" suffix="cm" value={draft.waistCm} onChange={(waistCm) => setDraft((d) => ({ ...d, waistCm }))} />
-              <NumberField label="Chest" suffix="cm" value={draft.chestCm} onChange={(chestCm) => setDraft((d) => ({ ...d, chestCm }))} />
-              <NumberField label="Arm" suffix="cm" value={draft.armCm} onChange={(armCm) => setDraft((d) => ({ ...d, armCm }))} />
-              <NumberField label="Leg" suffix="cm" value={draft.legCm} onChange={(legCm) => setDraft((d) => ({ ...d, legCm }))} />
-              <NumberField label="Body fat" suffix="%" value={draft.bodyFatPercent} onChange={(bodyFatPercent) => setDraft((d) => ({ ...d, bodyFatPercent }))} />
+              <NumberField label={t("body.waist")} suffix="cm" value={draft.waistCm} onChange={(waistCm) => setDraft((d) => ({ ...d, waistCm }))} />
+              <NumberField label={t("body.chest")} suffix="cm" value={draft.chestCm} onChange={(chestCm) => setDraft((d) => ({ ...d, chestCm }))} />
+              <NumberField label={t("body.arm")} suffix="cm" value={draft.armCm} onChange={(armCm) => setDraft((d) => ({ ...d, armCm }))} />
+              <NumberField label={t("body.leg")} suffix="cm" value={draft.legCm} onChange={(legCm) => setDraft((d) => ({ ...d, legCm }))} />
+              <NumberField label={t("body.bodyFat")} suffix="%" value={draft.bodyFatPercent} onChange={(bodyFatPercent) => setDraft((d) => ({ ...d, bodyFatPercent }))} />
             </div>
           ) : null}
         </div>

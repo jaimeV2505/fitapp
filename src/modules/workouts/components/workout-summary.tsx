@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CountUp } from "@/components/ui/animated-number";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
+import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import { formatDuration, formatWeight } from "../domain/format";
 import { computeSessionProgress, countsAsWorkingSet } from "../domain/metrics";
@@ -32,6 +33,9 @@ interface WorkoutSummaryProps {
 }
 
 export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryProps) {
+  const t = useT();
+  const name = useLocalizedName();
+  const intl = useIntlLocale();
   const progress = computeSessionProgress(session.exercises);
   const durationSeconds =
     session.completedAt === null ? 0 : (new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()) / 1000;
@@ -46,17 +50,17 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
   }, [celebrate, pathname]);
 
   const stats = [
-    { label: "Duration", node: <span className="tnum">{formatDuration(durationSeconds)}</span> },
-    { label: "Sets", node: <CountUp value={progress.setsCompleted} /> },
-    { label: "Volume", node: <CountUp value={progress.totalVolumeKg} suffix=" kg" /> },
+    { label: t("summary.duration"), node: <span className="tnum">{formatDuration(durationSeconds)}</span> },
+    { label: t("summary.sets"), node: <CountUp value={progress.setsCompleted} /> },
+    { label: t("summary.volume"), node: <CountUp value={progress.totalVolumeKg} suffix=" kg" locale={intl} /> },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       {celebrate && !discarded ? (
         <FinishedCelebration
-          focus={session.focus}
-          name={session.name}
+          focus={name(session.focus)}
+          name={name(session.name)}
           durationLabel={formatDuration(durationSeconds)}
           sets={progress.setsCompleted}
           volumeKg={progress.totalVolumeKg}
@@ -67,8 +71,8 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
       ) : (
         <>
           <header>
-            <p className="text-sm font-medium text-muted-foreground">{discarded ? "Discarded" : formatShortDate(session.localDate)}</p>
-            <h1 className="display-xl truncate">{session.focus}</h1>
+            <p className="text-sm font-medium text-muted-foreground">{discarded ? t("summary.discarded") : formatShortDate(session.localDate, intl)}</p>
+            <h1 className="display-xl truncate">{name(session.focus)}</h1>
           </header>
 
           <motion.div className="grid grid-cols-3 gap-3" variants={STAT_VARIANTS} initial="hidden" animate="show">
@@ -87,14 +91,14 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
       {records.length > 0 ? (
         <section aria-labelledby="records-heading" className="flex flex-col gap-2 rounded-2xl border border-primary/40 bg-card p-4">
           <h2 id="records-heading" className="flex items-center gap-2 text-lg font-semibold">
-            <Trophy className="size-5 text-primary" /> New records
+            <Trophy className="size-5 text-primary" /> {t("summary.newRecords")}
           </h2>
           <ul className="flex flex-col gap-1">
             {records.map((record) => (
               <li key={record.id} className="flex justify-between gap-4 text-sm">
-                <span className="font-medium">{record.exerciseName}</span>
+                <span className="font-medium">{name(record.exerciseName)}</span>
                 <span className="tnum text-muted-foreground">
-                  {record.kind === "weight" ? `${record.valueKg} kg, heaviest yet` : `est. 1RM ${record.valueKg} kg`}
+                  {record.kind === "weight" ? t("summary.recordWeight", { kg: record.valueKg }) : t("summary.recordE1rm", { kg: record.valueKg })}
                 </span>
               </li>
             ))}
@@ -104,27 +108,27 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
 
       <section aria-labelledby="exercises-heading" className="flex flex-col gap-3">
         <h2 id="exercises-heading" className="text-lg font-semibold">
-          Exercises
+          {t("summary.exercises")}
         </h2>
         {session.exercises.map((exercise) => {
           const done = exercise.sets.filter(countsAsWorkingSet);
           return (
             <Card key={exercise.id} className="p-4">
               <div className="flex items-center gap-3">
-                <ExerciseThumb src={exercise.imageUrls[0]} name={exercise.name} muscle={exercise.primaryMuscle} className="size-12" sizes="48px" />
-                <p className="font-semibold">{exercise.name}</p>
+                <ExerciseThumb src={exercise.imageUrls[0]} name={name(exercise.name)} muscle={exercise.primaryMuscle} className="size-12" sizes="48px" />
+                <p className="font-semibold">{name(exercise.name)}</p>
               </div>
               {done.length === 0 ? (
-                <p className="mt-1 text-sm text-muted-foreground">Skipped</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("summary.skipped")}</p>
               ) : (
                 <ul className="tnum mt-2 flex flex-col gap-1 text-sm">
                   {done.map((set) => (
                     <li key={set.id} className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">Set {set.setNumber}</span>
+                      <span className="text-muted-foreground">{t("editor.set", { n: set.setNumber })}</span>
                       <span className="font-medium">
                         {set.weightKg === null ? "" : `${formatWeight(set.weightKg)} kg × `}
                         {set.reps}
-                        {set.rir === null ? "" : ` · RIR ${set.rir}`}
+                        {set.rir === null ? "" : ` · ${t("summary.rir", { value: set.rir })}`}
                       </span>
                     </li>
                   ))}
@@ -136,7 +140,7 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
       </section>
 
       <Button asChild variant="secondary" size="lg">
-        <Link href="/progress">Back to history</Link>
+        <Link href="/progress">{t("summary.backToHistory")}</Link>
       </Button>
     </div>
   );

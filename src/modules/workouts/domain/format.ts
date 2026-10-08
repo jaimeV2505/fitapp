@@ -38,6 +38,6 @@ export function formatDuration(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function formatVolume(totalKg: number): string {
-  return `${Math.round(totalKg).toLocaleString("en-US")} kg`;
+export function formatVolume(totalKg: number, locale = "en-US"): string {
+  return `${Math.round(totalKg).toLocaleString(locale)} kg`;
 }

@@ -1,3 +1,5 @@
+import { formatMessage, type MessageParams } from "@/lib/i18n/format";
+
 export type ErrorCode =
   | "unauthenticated"
   | "validation"
@@ -6,13 +8,19 @@ export type ErrorCode =
   | "rate_limited"
   | "internal";
 
-/** Expected, user-presentable failure raised by the service layer. */
+/**
+ * Expected, user-presentable failure raised by the service layer. The message is an English template
+ * (optionally with {placeholders} filled from `params`); the user sees its translation (see lib/i18n/errors.ts).
+ */
 export class AppError extends Error {
+  readonly template: string;
+
   constructor(
     public readonly code: ErrorCode,
-    message: string,
+    template: string,
+    public readonly params: MessageParams = {},
   ) {
-    super(message);
-    this.name = "AppError";
+    super(formatMessage(template, params));
+    this.template = template;
   }
 }

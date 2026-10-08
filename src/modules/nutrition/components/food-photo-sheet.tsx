@@ -9,11 +9,12 @@ import { NumberField } from "@/components/ui/number-field";
 import { Sheet } from "@/components/ui/sheet";
 import { MEAL_TYPES, type ConfidenceLevel, type MealType } from "@/lib/db/schema/enums";
 import { resizeImage } from "@/lib/image";
+import { useT } from "@/lib/i18n/client";
+import { mealLabel } from "@/lib/i18n/labels";
 import { cn } from "@/lib/utils";
 import { levelFromScore, scaleItemToGrams, type EstimatedItem } from "@/modules/ai/domain/food-estimate";
 import { analyzeFoodPhotoAction, saveAiMealAction } from "../actions";
 import { sumMacros } from "../domain/macros";
-import { MEAL_LABEL } from "../labels";
 
 type Step = "preview" | "analyzing" | "review";
 
@@ -21,7 +22,6 @@ interface Row extends EstimatedItem {
   key: string;
 }
 
-const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = { high: "High", medium: "Medium", low: "Low" };
 const CONFIDENCE_TONE: Record<ConfidenceLevel, string> = {
   high: "bg-success-soft text-success",
   medium: "bg-plate-yellow/20 text-foreground",
@@ -37,7 +37,8 @@ function defaultMealType(): MealType {
 }
 
 function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
-  return <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", CONFIDENCE_TONE[level])}>{CONFIDENCE_LABEL[level]} confidence</span>;
+  const t = useT();
+  return <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", CONFIDENCE_TONE[level])}>{t("confidence.badge", { level: t(`confidence.${level}`) })}</span>;
 }
 
 export interface PhotoControl {
@@ -48,6 +49,7 @@ export interface PhotoControl {
 /** Camera -> Claude estimate -> you review and edit everything -> save. Nothing is saved before you confirm. */
 export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef?: React.Ref<PhotoControl> }) {
   const router = useRouter();
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("preview");
@@ -85,7 +87,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
       setMealType(defaultMealType());
       setOpen(true);
     } catch {
-      toast.error("That photo could not be read. Try another one.");
+      toast.error(t("photo.readFail"));
     }
   }
 
@@ -134,7 +136,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
         })),
       });
       if (!result.ok) return setError(result.error);
-      toast.success("Meal saved", { description: `${Math.round(totals.calories)} kcal · marked as AI estimated` });
+      toast.success(t("photo.saved"), { description: t("photo.savedSummary", { kcal: Math.round(totals.calories) }) });
       setOpen(false);
       router.refresh();
     });
@@ -150,7 +152,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
         accept="image/*"
         capture="environment"
         className="sr-only"
-        aria-label="Take a food photo"
+        aria-label={t("photo.takeAria")}
         onChange={(event) => {
           void onFile(event.target.files?.[0]);
           event.target.value = "";
@@ -163,7 +165,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
       <Sheet
         open={open}
         onOpenChange={setOpen}
-        title={step === "review" ? "Check the estimate" : "Food photo"}
+        title={step === "review" ? t("photo.review") : t("photo.title")}
         footer={
           step === "preview" ? (
             <div className="flex flex-col gap-2">
@@ -173,10 +175,10 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                 </p>
               ) : null}
               <Button size="lg" onClick={analyze} disabled={pending || !photo}>
-                Estimate calories
+                {t("photo.estimate")}
               </Button>
               <Button variant="ghost" onClick={() => inputRef.current?.click()}>
-                <RotateCcw className="size-4" /> Retake photo
+                <RotateCcw className="size-4" /> {t("photo.retake")}
               </Button>
             </div>
           ) : step === "review" ? (
@@ -184,7 +186,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
               <div className="flex items-baseline justify-between">
                 <span className="display-md tnum">{Math.round(totals.calories)} kcal</span>
                 <span className="tnum text-sm text-muted-foreground">
-                  P {Math.round(totals.protein)} · C {Math.round(totals.carbs)} · F {Math.round(totals.fat)}
+                  {t("macros.short", { p: Math.round(totals.protein), c: Math.round(totals.carbs), f: Math.round(totals.fat) })}
                 </span>
               </div>
               {error ? (
@@ -193,7 +195,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                 </p>
               ) : null}
               <Button size="lg" onClick={save} disabled={pending || !valid}>
-                {pending ? "Saving…" : "Save meal"}
+                {pending ? t("photo.saving") : t("photo.saveMeal")}
               </Button>
             </div>
           ) : undefined
@@ -202,21 +204,21 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
         {step !== "review" && previewUrl ? (
           <div className="flex flex-col gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- local object URL, not optimizable */}
-            <img src={previewUrl} alt="Your meal" className="aspect-[4/3] w-full rounded-2xl object-cover" />
+            <img src={previewUrl} alt={t("photo.alt")} className="aspect-[4/3] w-full rounded-2xl object-cover" />
             {step === "analyzing" ? (
               <div role="status" className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
-                <LoaderCircle className="size-5 animate-spin" /> Estimating your meal…
+                <LoaderCircle className="size-5 animate-spin" /> {t("photo.estimating")}
               </div>
             ) : (
               <div>
                 <label htmlFor="photo-hint" className="mb-1.5 block text-sm font-medium text-muted-foreground">
-                  Anything the photo does not show? (optional)
+                  {t("photo.hintLabel")}
                 </label>
                 <input
                   id="photo-hint"
                   value={hint}
                   onChange={(event) => setHint(event.target.value)}
-                  placeholder="e.g. chicken thigh, cooked in olive oil"
+                  placeholder={t("photo.hintPlaceholder")}
                   maxLength={200}
                   className="h-12 w-full rounded-xl bg-input px-3 text-base outline-none focus:ring-2 focus:ring-ring"
                 />
@@ -229,16 +231,16 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
           <div className="flex flex-col gap-5">
             <div className="rounded-2xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">AI estimated</span>
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{t("meals.aiEstimated")}</span>
                 <ConfidenceBadge level={overall} />
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                This is an estimate from a photo, so portions and hidden oil or sauce can be off. Correct anything that looks wrong before saving.
+                {t("photo.warning")}
               </p>
               {notes ? <p className="mt-2 text-sm">{notes}</p> : null}
             </div>
 
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Meal type">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("logMeal.mealType")}>
               {MEAL_TYPES.map((type) => (
                 <button
                   key={type}
@@ -248,7 +250,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                   onClick={() => setMealType(type)}
                   className={cn("h-10 rounded-full px-4 text-sm font-semibold transition-colors", mealType === type ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}
                 >
-                  {MEAL_LABEL[type]}
+                  {mealLabel(t, type)}
                 </button>
               ))}
             </div>
@@ -260,14 +262,14 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                     <input
                       value={row.name}
                       onChange={(event) => update(row.key, { name: event.target.value })}
-                      aria-label="Food name"
+                      aria-label={t("photo.foodName")}
                       maxLength={80}
                       className="h-11 min-w-0 flex-1 rounded-xl bg-input px-3 font-semibold outline-none focus:ring-2 focus:ring-ring"
                     />
                     <button
                       type="button"
                       onClick={() => setRows((current) => current.filter((r) => r.key !== row.key))}
-                      aria-label={`Remove ${row.name}`}
+                      aria-label={t("photo.remove", { name: row.name })}
                       className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
                     >
                       <X className="size-4" />
@@ -277,18 +279,18 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                     <ConfidenceBadge level={levelFromScore(row.confidence)} />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <NumberField label="Weight" suffix="g" value={row.grams} onChange={(v) => setRows((cur) => cur.map((r) => (r.key === row.key ? scaledRow(r, v ?? 0) : r)))} />
-                    <NumberField label="Calories" suffix="kcal" value={row.calories} onChange={(v) => update(row.key, { calories: v ?? 0 })} />
+                    <NumberField label={t("photo.weight")} suffix="g" value={row.grams} onChange={(v) => setRows((cur) => cur.map((r) => (r.key === row.key ? scaledRow(r, v ?? 0) : r)))} />
+                    <NumberField label={t("nutrition.calories")} suffix="kcal" value={row.calories} onChange={(v) => update(row.key, { calories: v ?? 0 })} />
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-2">
-                    <NumberField label="Protein" suffix="g" value={row.protein} onChange={(v) => update(row.key, { protein: v ?? 0 })} />
-                    <NumberField label="Carbs" suffix="g" value={row.carbs} onChange={(v) => update(row.key, { carbs: v ?? 0 })} />
-                    <NumberField label="Fat" suffix="g" value={row.fat} onChange={(v) => update(row.key, { fat: v ?? 0 })} />
+                    <NumberField label={t("nutrition.protein")} suffix="g" value={row.protein} onChange={(v) => update(row.key, { protein: v ?? 0 })} />
+                    <NumberField label={t("nutrition.carbs")} suffix="g" value={row.carbs} onChange={(v) => update(row.key, { carbs: v ?? 0 })} />
+                    <NumberField label={t("nutrition.fat")} suffix="g" value={row.fat} onChange={(v) => update(row.key, { fat: v ?? 0 })} />
                   </div>
                 </li>
               ))}
             </ul>
-            {rows.length === 0 ? <p className="text-center text-sm text-muted-foreground">No foods left. Retake the photo or log the meal by hand.</p> : null}
+            {rows.length === 0 ? <p className="text-center text-sm text-muted-foreground">{t("photo.noneLeft")}</p> : null}
           </div>
         ) : null}
       </Sheet>

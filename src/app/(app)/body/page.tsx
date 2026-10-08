@@ -1,32 +1,37 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { LazyWeightChart } from "@/components/lazy-charts";
 import { Card } from "@/components/ui/card";
 import { Stagger, StaggerItem } from "@/components/ui/stagger";
+import { INTL_LOCALE } from "@/lib/i18n/config";
+import { titleOf } from "@/lib/i18n/metadata";
+import { getI18n } from "@/lib/i18n/server";
+import type { MessageKey } from "@/lib/i18n/types";
 import { cn } from "@/lib/utils";
 import { LogMeasurementButton } from "@/modules/body/components/log-measurement-sheet";
 import { MeasurementHistory } from "@/modules/body/components/measurement-history";
-import { WeightChart } from "@/modules/body/components/weight-chart";
 import { getBodyOverview } from "@/modules/body/service";
 import { rangeSchema } from "@/modules/body/validators";
 import type { MeasureField } from "@/modules/body/types";
 import { requireAppUser } from "@/modules/users/app-user";
 
-export const metadata = { title: "Body" };
+export const generateMetadata = titleOf("body.title");
 
 const RANGES = [7, 30, 90] as const;
-const MEASURE_LABEL: Record<MeasureField, { label: string; unit: string }> = {
-  bodyFatPercent: { label: "Body fat", unit: "%" },
-  waistCm: { label: "Waist", unit: "cm" },
-  chestCm: { label: "Chest", unit: "cm" },
-  armCm: { label: "Arm", unit: "cm" },
-  legCm: { label: "Leg", unit: "cm" },
+const MEASURE_LABEL: Record<MeasureField, { label: MessageKey; unit: string }> = {
+  bodyFatPercent: { label: "body.bodyFat", unit: "%" },
+  waistCm: { label: "body.waist", unit: "cm" },
+  chestCm: { label: "body.chest", unit: "cm" },
+  armCm: { label: "body.arm", unit: "cm" },
+  legCm: { label: "body.leg", unit: "cm" },
 };
 
 const signed = (value: number): string => `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value)}`;
 
 export default async function BodyPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const user = await requireAppUser();
+  const { t, locale } = await getI18n();
   const { range } = rangeSchema.catch({ range: "30" }).parse(await searchParams);
   const rangeDays = Number(range);
   const overview = await getBodyOverview(user.id, rangeDays);
@@ -37,9 +42,9 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
       <StaggerItem>
         <header>
           <Link href="/progress" className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
-            <ChevronLeft className="size-4" /> Progress
+            <ChevronLeft className="size-4" /> {t("body.progress")}
           </Link>
-          <h1 className="display-xl">Body</h1>
+          <h1 className="display-xl">{t("body.title")}</h1>
         </header>
       </StaggerItem>
 
@@ -51,20 +56,20 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
         <Card className="p-5">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Latest weight</p>
+              <p className="text-sm font-medium text-muted-foreground">{t("body.latestWeight")}</p>
               <p className="display-lg mt-1">
                 {overview.latestWeightKg === null ? "–" : <AnimatedNumber value={overview.latestWeightKg} decimals={1} suffix=" kg" />}
               </p>
             </div>
             {change ? (
               <div className="text-right">
-                <p className="text-sm font-medium text-muted-foreground">{rangeDays}-day trend</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("body.trend", { days: rangeDays })}</p>
                 <p className="display-md tnum mt-1">{signed(change.deltaKg)} kg</p>
               </div>
             ) : null}
           </div>
 
-          <div role="radiogroup" aria-label="Range" className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
+          <div role="radiogroup" aria-label={t("body.range")} className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
             {RANGES.map((value) => (
               <Link
                 key={value}
@@ -76,36 +81,32 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
                   rangeDays === value ? "bg-card text-foreground" : "text-muted-foreground",
                 )}
               >
-                {value} days
+                {t("body.days", { days: value })}
               </Link>
             ))}
           </div>
           <div className="mt-4">
-            <WeightChart points={overview.series} />
+            <LazyWeightChart points={overview.series} />
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">Grey dots are weigh-ins. The line is the 7-day moving average, which smooths daily water and food swings.</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("body.chartNote")}</p>
         </Card>
       </StaggerItem>
 
       <StaggerItem>
         <Card className="p-5">
-          <h2 className="text-lg font-semibold">Intake and weight</h2>
+          <h2 className="text-lg font-semibold">{t("body.intakeTitle")}</h2>
           {overview.averageCalories !== null && overview.loggedDays > 0 ? (
             <p className="mt-2">
-              You averaged <span className="tnum font-semibold">{overview.averageCalories.toLocaleString("en-US")} kcal</span> on the {overview.loggedDays}{" "}
-              {overview.loggedDays === 1 ? "day" : "days"} you logged meals in this period
-              {change ? (
-                <>
-                  , while your smoothed weight changed by <span className="tnum font-semibold">{signed(change.deltaKg)} kg</span>.
-                </>
-              ) : (
-                "."
-              )}
+              {t("body.intake", {
+                kcal: overview.averageCalories.toLocaleString(INTL_LOCALE[locale]),
+                days: overview.loggedDays,
+                trend: change ? t("body.intakeTrend", { delta: signed(change.deltaKg) }) : t("body.intakeNoTrend"),
+              })}
             </p>
           ) : (
-            <p className="mt-2 text-muted-foreground">Log meals in Nutrition to see your average intake next to your weight trend.</p>
+            <p className="mt-2 text-muted-foreground">{t("body.intakeEmpty")}</p>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">A view of your own data, not advice. Days without logged meals are not counted.</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("body.intakeNote")}</p>
         </Card>
       </StaggerItem>
 
@@ -113,16 +114,16 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
         <StaggerItem>
           <section aria-labelledby="measures-heading">
             <h2 id="measures-heading" className="mb-3 text-lg font-semibold">
-              Measurements
+              {t("body.measurements")}
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {overview.measures.map((m) => (
                 <Card key={m.field} className="p-4">
-                  <p className="text-xs font-medium text-muted-foreground">{MEASURE_LABEL[m.field].label}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t(MEASURE_LABEL[m.field].label)}</p>
                   <p className="display-md tnum mt-1">
                     {m.latest} {MEASURE_LABEL[m.field].unit}
                   </p>
-                  {m.delta !== null ? <p className="tnum text-xs text-muted-foreground">{signed(m.delta)} since last</p> : null}
+                  {m.delta !== null ? <p className="tnum text-xs text-muted-foreground">{t("body.sinceLast", { delta: signed(m.delta) })}</p> : null}
                 </Card>
               ))}
             </div>
@@ -133,7 +134,7 @@ export default async function BodyPage({ searchParams }: { searchParams: Promise
       <StaggerItem>
         <section aria-labelledby="entries-heading">
           <h2 id="entries-heading" className="mb-3 text-lg font-semibold">
-            Entries
+            {t("body.entries")}
           </h2>
           <MeasurementHistory items={overview.history} />
         </section>

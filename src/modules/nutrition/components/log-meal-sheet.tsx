@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 import type { FoodView } from "@/modules/foods/types";
 import { gramsFor, macrosFor, resolveTemplateItems, sumMacros, type Macros } from "../domain/macros";
 import { logMealAction } from "../actions";
-import { MEAL_LABEL, UNIT_LABEL } from "../labels";
+import { useLocalizedName, useT } from "@/lib/i18n/client";
+import { mealLabel, unitLabel } from "@/lib/i18n/labels";
 import type { TemplateView } from "../types";
 
 interface DraftItem {
@@ -66,6 +67,8 @@ interface LogMealSheetProps {
 
 export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: LogMealSheetProps) {
   const router = useRouter();
+  const t = useT();
+  const localName = useLocalizedName();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"choose" | "edit">("choose");
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -157,31 +160,34 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
         items: visibleItems.map((item) => ({ foodId: item.foodId, quantity: item.quantity ?? 0, unit: item.unit })),
       });
       if (!result.ok) return setError(result.error);
-      toast.success("Meal logged", { description: `${Math.round(totals.calories)} kcal · ${Math.round(totals.protein)} g protein` });
+      toast.success(t("logMeal.saved"), { description: t("logMeal.savedSummary", { kcal: Math.round(totals.calories), protein: Math.round(totals.protein) }) });
       setOpen(false);
       router.refresh();
     });
   }
 
-  const pickerFoods = foods.filter((food) => food.name.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 40);
+  const pickerFoods = foods.filter((food) => {
+    const query = search.trim().toLowerCase();
+    return food.name.toLowerCase().includes(query) || localName(food.name).toLowerCase().includes(query);
+  }).slice(0, 40);
 
   return (
     <>
       <Button size="lg" className="w-full" onClick={openSheet}>
-        <Plus className="size-6" /> Log meal{isToday ? "" : " for this day"}
+        <Plus className="size-6" /> {isToday ? t("logMeal.logMeal") : t("logMeal.logMealForDay")}
       </Button>
 
       <Sheet
         open={open}
         onOpenChange={setOpen}
-        title={step === "choose" ? "Log a meal" : picking ? "Add food" : "Your meal"}
+        title={step === "choose" ? t("logMeal.title") : picking ? t("logMeal.addFood") : t("logMeal.yourMeal")}
         footer={
           step === "edit" && !picking ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between">
                 <span className="display-md tnum">{Math.round(totals.calories)} kcal</span>
                 <span className="tnum text-sm text-muted-foreground">
-                  P {Math.round(totals.protein)} · C {Math.round(totals.carbs)} · F {Math.round(totals.fat)}
+                  {t("macros.short", { p: Math.round(totals.protein), c: Math.round(totals.carbs), f: Math.round(totals.fat) })}
                 </span>
               </div>
               {error ? (
@@ -190,7 +196,7 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                 </p>
               ) : null}
               <Button size="lg" onClick={save} disabled={!canSave || pending}>
-                {pending ? "Saving…" : "Save meal"}
+                {pending ? t("logMeal.saving") : t("logMeal.saveMeal")}
               </Button>
             </div>
           ) : undefined
@@ -209,12 +215,12 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
               >
                 <Camera className="size-6 shrink-0" />
                 <span>
-                  <span className="block font-semibold">Take a photo</span>
-                  <span className="block text-sm opacity-80">Estimate calories and macros automatically, then correct anything.</span>
+                  <span className="block font-semibold">{t("logMeal.takePhoto")}</span>
+                  <span className="block text-sm opacity-80">{t("logMeal.takePhotoHint")}</span>
                 </span>
               </button>
             ) : null}
-            <p className="mb-1 mt-2 text-sm text-muted-foreground">Or start from one of your templates and adjust the amounts.</p>
+            <p className="mb-1 mt-2 text-sm text-muted-foreground">{t("logMeal.orTemplate")}</p>
             {templates.map((template) => {
               const kcal = templateCalories(template, foodsById);
               return (
@@ -225,8 +231,8 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                   className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-transform active:scale-[0.99]"
                 >
                   <span className="min-w-0">
-                    <span className="block font-semibold">{template.name}</span>
-                    <span className="block truncate text-sm text-muted-foreground">{template.items.map((i) => i.foodName).join(", ")}</span>
+                    <span className="block font-semibold">{localName(template.name)}</span>
+                    <span className="block truncate text-sm text-muted-foreground">{template.items.map((i) => localName(i.foodName)).join(", ")}</span>
                   </span>
                   <span className="tnum shrink-0 font-semibold">{Math.round(kcal)} kcal</span>
                 </button>
@@ -237,7 +243,7 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
               onClick={startCustom}
               className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-4 text-left font-semibold transition-colors hover:bg-muted"
             >
-              <Plus className="size-5" /> Custom meal
+              <Plus className="size-5" /> {t("logMeal.custom")}
             </button>
           </div>
         ) : picking ? (
@@ -248,8 +254,8 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                 autoFocus
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search foods"
-                aria-label="Search foods"
+                placeholder={t("logMeal.searchFoods")}
+                aria-label={t("logMeal.searchFoods")}
                 className="h-12 w-full rounded-xl bg-input pl-10 pr-3 text-base outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -261,22 +267,22 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                     onClick={() => addFood(food)}
                     className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted"
                   >
-                    <span className="min-w-0 truncate font-medium">{food.name}</span>
-                    <span className="tnum shrink-0 text-sm text-muted-foreground">{Math.round(food.caloriesPer100)} kcal / 100 g</span>
+                    <span className="min-w-0 truncate font-medium">{localName(food.name)}</span>
+                    <span className="tnum shrink-0 text-sm text-muted-foreground">{t("logMeal.kcalPer100", { kcal: Math.round(food.caloriesPer100) })}</span>
                   </button>
                 </li>
               ))}
-              {pickerFoods.length === 0 ? <li className="px-3 py-6 text-center text-sm text-muted-foreground">No foods match. Add it in Manage foods.</li> : null}
+              {pickerFoods.length === 0 ? <li className="px-3 py-6 text-center text-sm text-muted-foreground">{t("logMeal.noFoods")}</li> : null}
             </ul>
             {draft.items.length > 0 ? (
               <Button variant="ghost" onClick={() => setPicking(false)}>
-                <ArrowLeft className="size-4" /> Back to meal
+                <ArrowLeft className="size-4" /> {t("logMeal.backToMeal")}
               </Button>
             ) : null}
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Meal type">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("logMeal.mealType")}>
               {MEAL_TYPES.map((type) => (
                 <button
                   key={type}
@@ -289,7 +295,7 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                     draft.mealType === type ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
                   )}
                 >
-                  {MEAL_LABEL[type]}
+                  {mealLabel(t, type)}
                 </button>
               ))}
             </div>
@@ -298,8 +304,8 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
               const selected = resolveTemplateItems(draft.items, draft.choices).find((i) => i.optionGroup === group)?.id;
               return (
                 <div key={group}>
-                  <p className="mb-1.5 text-sm font-medium capitalize text-muted-foreground">{group}</p>
-                  <div role="radiogroup" aria-label={group} className="flex gap-2">
+                  <p className="mb-1.5 text-sm font-medium capitalize text-muted-foreground">{localName(group)}</p>
+                  <div role="radiogroup" aria-label={localName(group)} className="flex gap-2">
                     {options.map((option) => (
                       <button
                         key={option.id}
@@ -312,7 +318,7 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                           selected === option.id ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
                         )}
                       >
-                        {foodsById.get(option.foodId)?.name ?? "Unknown"}
+                        {localName(foodsById.get(option.foodId)?.name ?? t("logMeal.unknown"))}
                       </button>
                     ))}
                   </div>
@@ -329,11 +335,11 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                 return (
                   <li key={item.id} className="rounded-2xl border border-border bg-card p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 font-semibold">{food?.name ?? "Unknown food"}</p>
+                      <p className="min-w-0 font-semibold">{localName(food?.name ?? t("logMeal.unknownFood"))}</p>
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        aria-label={`Remove ${food?.name ?? "food"}`}
+                        aria-label={t("logMeal.removeFood", { name: localName(food?.name ?? t("logMeal.unknownFood")) })}
                         className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
                       >
                         <X className="size-4" />
@@ -342,13 +348,13 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                     <div className="mt-2 flex items-end gap-2">
                       <NumberField
                         className="flex-1"
-                        label={`Amount of ${food?.name ?? "food"}`}
+                        label={t("logMeal.amountOf", { name: localName(food?.name ?? t("logMeal.unknownFood")) })}
                         hideLabel
                         value={item.quantity}
                         onChange={(quantity) => updateItem(item.id, { quantity })}
                         decimal={item.unit === "g" || item.unit === "ml"}
                       />
-                      <div role="radiogroup" aria-label="Unit" className="flex h-12 gap-1 rounded-xl bg-muted p-1">
+                      <div role="radiogroup" aria-label={t("logMeal.unit")} className="flex h-12 gap-1 rounded-xl bg-muted p-1">
                         {units.map((unit) => (
                           <button
                             key={unit}
@@ -361,15 +367,15 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                               item.unit === unit ? "bg-card text-foreground" : "text-muted-foreground",
                             )}
                           >
-                            {unit === "piece" ? (food?.pieceLabel ?? "pcs") : UNIT_LABEL[unit]}
+                            {unit === "piece" ? (food?.pieceLabel ? localName(food.pieceLabel) : unitLabel(t, "piece")) : unitLabel(t, unit)}
                           </button>
                         ))}
                       </div>
                     </div>
                     <p className="tnum mt-2 text-sm text-muted-foreground">
                       {macros
-                        ? `${Math.round(macros.calories)} kcal · P ${Math.round(macros.protein)} · C ${Math.round(macros.carbs)} · F ${Math.round(macros.fat)}`
-                        : "Enter an amount"}
+                        ? t("logMeal.macrosLine", { kcal: Math.round(macros.calories), p: Math.round(macros.protein), c: Math.round(macros.carbs), f: Math.round(macros.fat) })
+                        : t("logMeal.enterAmount")}
                     </p>
                   </li>
                 );
@@ -377,7 +383,7 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
             </ul>
 
             <Button variant="secondary" onClick={() => setPicking(true)}>
-              <Plus className="size-5" /> Add food
+              <Plus className="size-5" /> {t("logMeal.addFood")}
             </Button>
           </div>
         )}

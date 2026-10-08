@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MUSCLE_LABEL } from "@/lib/muscles";
+import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
+import { equipmentLabel, muscleLabel } from "@/lib/i18n/labels";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
 import { formatTarget } from "../domain/format";
 import type { PlanDayDetail } from "../types";
@@ -22,11 +23,16 @@ interface WeekPlannerProps {
  * Selection is local state, so switching days is instant.
  */
 export function WeekPlanner({ days, todayDayId, activeSessionId }: WeekPlannerProps) {
+  // Hooks first: they must run in the same order on every render, before any early return.
+  const t = useT();
+  const name = useLocalizedName();
+  const intl = useIntlLocale();
   const [selectedId, setSelectedId] = useState<string | null>(todayDayId ?? days[0]?.id ?? null);
   const selected = days.find((day) => day.id === selectedId) ?? days[0];
   if (!selected) return null;
 
   const isToday = selected.id === todayDayId;
+  const dayName = weekdayLabel(selected, true, intl);
   const totalSets = selected.items.reduce((sum, item) => sum + item.sets, 0);
 
   return (
@@ -37,7 +43,7 @@ export function WeekPlanner({ days, todayDayId, activeSessionId }: WeekPlannerPr
         <motion.section
           key={selected.id}
           role="tabpanel"
-          aria-label={`${weekdayLabel(selected, true)} routine`}
+          aria-label={t("planner.routineOf", { day: dayName })}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
@@ -46,30 +52,29 @@ export function WeekPlanner({ days, todayDayId, activeSessionId }: WeekPlannerPr
         >
           <header className="hatch rounded-2xl border border-border bg-card p-5">
             <p className="text-sm font-medium text-muted-foreground">
-              {weekdayLabel(selected, true)}
-              {isToday ? " · today" : ""}
+              {isToday ? t("planner.dayAndToday", { day: dayName }) : dayName}
             </p>
-            <h2 className="display-lg mt-1">{selected.focus}</h2>
+            <h2 className="display-lg mt-1">{name(selected.focus)}</h2>
             <p className="mt-1 text-muted-foreground">
-              {selected.name} · {selected.items.length} exercises · {totalSets} sets
+              {name(selected.name)} · {t("home.exercisesSets", { exercises: selected.items.length, sets: totalSets })}
             </p>
           </header>
 
           <ol className="flex flex-col gap-2">
             {selected.items.map((item, index) => (
               <li key={`${item.exerciseId}-${index}`} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-                <ExerciseThumb src={item.imageUrl ?? undefined} name={item.name} muscle={item.primaryMuscle} className="size-14" />
+                <ExerciseThumb src={item.imageUrl ?? undefined} name={name(item.name)} muscle={item.primaryMuscle} className="size-14" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{item.name}</p>
+                  <p className="truncate font-semibold">{name(item.name)}</p>
                   <p className="truncate text-sm text-muted-foreground">
-                    {MUSCLE_LABEL[item.primaryMuscle]}
-                    {item.equipment ? ` · ${item.equipment}` : ""}
+                    {muscleLabel(t, item.primaryMuscle)}
+                    {item.equipment ? ` · ${equipmentLabel(t, item.equipment)}` : ""}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="tnum font-semibold">{formatTarget(item.sets, item.repMin, item.repMax)}</p>
                   <p className="tnum text-xs text-muted-foreground">
-                    {item.rirMin === item.rirMax ? item.rirMin : `${item.rirMin}\u2013${item.rirMax}`} RIR
+                    {t("planner.rir", { value: item.rirMin === item.rirMax ? item.rirMin : `${item.rirMin}\u2013${item.rirMax}` })}
                   </p>
                 </div>
               </li>
@@ -78,13 +83,13 @@ export function WeekPlanner({ days, todayDayId, activeSessionId }: WeekPlannerPr
 
           {activeSessionId ? (
             <Button asChild size="lg" className="w-full">
-              <Link href={`/workout/${activeSessionId}`}>Resume workout</Link>
+              <Link href={`/workout/${activeSessionId}`}>{t("home.resumeWorkout")}</Link>
             </Button>
           ) : (
             <StartWorkoutButton
               dayId={selected.id}
               activeSessionId={null}
-              label={isToday ? "Start workout" : `Start ${weekdayLabel(selected, true)} · ${selected.focus}`}
+              label={isToday ? t("home.startWorkout") : t("planner.startDay", { day: dayName, focus: name(selected.focus) })}
               size="lg"
               className="w-full"
             />

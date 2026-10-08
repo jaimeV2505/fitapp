@@ -3,10 +3,12 @@
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n/client";
 import { spring } from "@/lib/motion";
 import type { RecordHit } from "../domain/records";
 
 function RecordToast({ exercise, hit }: { exercise: string; hit: RecordHit }) {
+  const t = useT();
   return (
     <motion.div
       initial={{ opacity: 0, y: -10, scale: 0.94 }}
@@ -29,10 +31,11 @@ function RecordToast({ exercise, hit }: { exercise: string; hit: RecordHit }) {
         </motion.span>
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold">New personal record</span>
+        <span className="block font-semibold">{t("recordToast.title")}</span>
         <span className="block truncate text-sm text-muted-foreground">
-          {exercise} ·{" "}
-          {hit.kind === "weight" ? `${hit.weightKg} kg × ${hit.reps}, heaviest yet` : `estimated 1RM ${hit.valueKg} kg`}
+          {hit.kind === "weight"
+            ? t("recordToast.weight", { exercise, weight: hit.weightKg, reps: hit.reps })
+            : t("recordToast.e1rm", { exercise, value: hit.valueKg })}
         </span>
       </span>
     </motion.div>

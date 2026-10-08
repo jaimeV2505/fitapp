@@ -4,7 +4,9 @@ import { Dumbbell } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import type { MuscleGroup } from "@/lib/db/schema/enums";
-import { MUSCLE_LABEL } from "@/lib/muscles";
+import { cdnUrl } from "@/lib/images";
+import { useT } from "@/lib/i18n/client";
+import { muscleLabel } from "@/lib/i18n/labels";
 import { cn } from "@/lib/utils";
 
 interface ExerciseThumbProps {
@@ -19,12 +21,13 @@ interface ExerciseThumbProps {
 /** Demo photo of an exercise. Falls back to a drawn tile when there is no photo or it fails to load. */
 export function ExerciseThumb({ src, name, muscle, className, sizes = "64px" }: ExerciseThumbProps) {
   const [failed, setFailed] = useState(false);
+  const t = useT();
 
   if (!src || failed) {
     return (
       <div
         role="img"
-        aria-label={`${name}, ${MUSCLE_LABEL[muscle]}`}
+        aria-label={`${name}, ${muscleLabel(t, muscle)}`}
         className={cn("flex shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground", className)}
       >
         <Dumbbell className="size-1/2" strokeWidth={1.8} />
@@ -35,7 +38,7 @@ export function ExerciseThumb({ src, name, muscle, className, sizes = "64px" }: 
   return (
     <div className={cn("ink-photo relative shrink-0 overflow-hidden rounded-xl", className)}>
       <Image
-        src={src}
+        src={cdnUrl(src)}
         alt={name}
         fill
         sizes={sizes}

@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useT } from "@/lib/i18n/client";
+import type { Translate } from "@/lib/i18n/translator";
 import { spring } from "@/lib/motion";
 import { Dumbbell, House, LineChart, User, Utensils, type LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -15,13 +17,13 @@ interface NavItem {
   primary?: boolean;
 }
 
-function buildItems(activeSessionId: string | null): NavItem[] {
+function buildItems(activeSessionId: string | null, t: Translate): NavItem[] {
   return [
-    { href: "/", label: "Home", icon: House },
-    { href: "/nutrition", label: "Nutrition", icon: Utensils },
-    { href: activeSessionId ? `/workout/${activeSessionId}` : "/workout", label: "Workout", icon: Dumbbell, primary: true },
-    { href: "/progress", label: "Progress", icon: LineChart },
-    { href: "/profile", label: "Profile", icon: User },
+    { href: "/", label: t("nav.home"), icon: House },
+    { href: "/nutrition", label: t("nav.nutrition"), icon: Utensils },
+    { href: activeSessionId ? `/workout/${activeSessionId}` : "/workout", label: t("nav.workout"), icon: Dumbbell, primary: true },
+    { href: "/progress", label: t("nav.progress"), icon: LineChart },
+    { href: "/profile", label: t("nav.profile"), icon: User },
   ];
 }
 
@@ -33,13 +35,14 @@ function isActive(pathname: string, href: string): boolean {
 
 export function AppNav({ activeSessionId }: { activeSessionId: string | null }) {
   const pathname = usePathname();
-  const items = buildItems(activeSessionId);
+  const t = useT();
+  const items = buildItems(activeSessionId, t);
 
   return (
     <>
       {/* Mobile: bottom bar */}
       <nav
-        aria-label="Main"
+        aria-label={t("nav.main")}
         className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/90 backdrop-blur-xl md:hidden"
       >
         <ul className="mx-auto flex max-w-lg items-end justify-between px-3 pt-2 pb-2">
@@ -102,7 +105,7 @@ export function AppNav({ activeSessionId }: { activeSessionId: string | null }) 
       </nav>
 
       {/* Desktop: side rail */}
-      <nav aria-label="Main" className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-1 border-r border-border bg-card p-4 md:flex">
+      <nav aria-label={t("nav.main")} className="fixed inset-y-0 left-0 hidden w-64 flex-col gap-1 border-r border-border bg-card p-4 md:flex">
         <p className="display-lg px-3 py-4">Fitapp</p>
         {items.map((item) => {
           const active = isActive(pathname, item.href);

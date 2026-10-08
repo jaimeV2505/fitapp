@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AnimatedCheck } from "@/components/ui/animated-check";
 import { Card } from "@/components/ui/card";
 import { collapse, duration, ease, popIn, slideSwap, spring } from "@/lib/motion";
+import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,10 @@ export function ExerciseCard({
   onShowDetail,
   registerRef,
 }: ExerciseCardProps) {
+  const t = useT();
+  const localName = useLocalizedName();
+  const intl = useIntlLocale();
+  const exerciseName = localName(exercise.name);
   // The set being edited. Null means "the next set to do".
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   // Ignore a second tap on "Complete set" while the previous editor is still animating out.
@@ -98,19 +103,19 @@ export function ExerciseCard({
         >
           <ExerciseThumb
             src={exercise.imageUrls[0]}
-            name={exercise.name}
+            name={exerciseName}
             muscle={exercise.primaryMuscle}
             className={cn("size-14", complete && !expanded && "opacity-60")}
           />
           <div className="min-w-0 flex-1">
-            <p className={cn("truncate text-lg font-semibold", complete && !expanded && "text-muted-foreground")}>{exercise.name}</p>
+            <p className={cn("truncate text-lg font-semibold", complete && !expanded && "text-muted-foreground")}>{exerciseName}</p>
             <p className="tnum mt-0.5 truncate text-sm text-muted-foreground">
               {formatTarget(exercise.targetSets, exercise.repMin, exercise.repMax)}
-              {previous ? ` · Last: ${previous.weightLabel ? `${previous.weightLabel} ` : ""}${previous.repsLabel}` : ""}
+              {previous ? t("card.last", { summary: `${previous.weightLabel ? `${previous.weightLabel} ` : ""}${previous.repsLabel}` }) : ""}
             </p>
             {progression?.kind === "increase" && !complete ? (
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
-                <ArrowUp className="size-3" strokeWidth={3} /> Ready for {progression.toKg} kg
+                <ArrowUp className="size-3" strokeWidth={3} /> {t("card.readyFor", { kg: progression.toKg })}
               </p>
             ) : null}
           </div>
@@ -121,7 +126,7 @@ export function ExerciseCard({
               animate={{ scale: 1, opacity: 1 }}
               transition={spring.pop}
             >
-              <AnimatedCheck className="size-4" animate={celebrating} /> Completed
+              <AnimatedCheck className="size-4" animate={celebrating} /> {t("card.completed")}
             </motion.span>
           ) : (
             <span className="tnum shrink-0 text-sm font-semibold text-muted-foreground">
@@ -135,7 +140,7 @@ export function ExerciseCard({
         <button
           type="button"
           onClick={() => onShowDetail(exercise)}
-          aria-label={`${exercise.name}: photos, muscles and history`}
+          aria-label={t("card.details", { name: exerciseName })}
           className="mr-3 flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted active:scale-95"
         >
           <Info className="size-5" />
@@ -156,17 +161,17 @@ export function ExerciseCard({
               {previous ? (
                 <div className="rounded-2xl bg-muted/70 px-4 py-3">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Previous workout{exercise.previous ? ` · ${formatShortDate(exercise.previous.localDate)}` : ""}
+                    {exercise.previous ? t("card.previousWorkoutDate", { date: formatShortDate(exercise.previous.localDate, intl) }) : t("card.previousWorkout")}
                   </p>
                   <p className="tnum mt-0.5 font-semibold">
                     {previous.weightLabel ? `${previous.weightLabel}  ` : ""}
                     <span className="font-medium text-muted-foreground">{previous.repsLabel}</span>
                   </p>
-                  {progression ? <p className="mt-1.5 text-sm text-muted-foreground">{progression.reason}</p> : null}
+                  {progression ? <p className="mt-1.5 text-sm text-muted-foreground">{t(progression.reason.key, progression.reason.params)}</p> : null}
                 </div>
               ) : null}
 
-              <ul className="flex flex-wrap gap-2" aria-label="Sets">
+              <ul className="flex flex-wrap gap-2" aria-label={t("card.sets")}>
                 {exercise.sets.map((set) => {
                   const isTarget = targetSet?.id === set.id;
                   return (
@@ -176,7 +181,7 @@ export function ExerciseCard({
                         onClick={() => setSelectedSetId(set.id)}
                         whileTap={{ scale: 0.93 }}
                         transition={spring.snappy}
-                        aria-label={`Set ${set.setNumber}${set.completed ? `, ${formatWeight(set.weightKg)} kilograms times ${set.reps}` : ""}`}
+                        aria-label={set.completed ? t("card.setAriaDone", { n: set.setNumber, weight: formatWeight(set.weightKg), reps: set.reps ?? 0 }) : t("card.setAria", { n: set.setNumber })}
                         aria-current={isTarget ? "true" : undefined}
                         className={cn(
                           "relative flex h-11 min-w-12 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition-colors",
@@ -254,14 +259,14 @@ export function ExerciseCard({
                     exit="exit"
                     className="rounded-2xl bg-success-soft px-4 py-3 text-center font-semibold text-success"
                   >
-                    All sets done
+                    {t("card.allSetsDone")}
                   </motion.p>
                 )}
               </AnimatePresence>
 
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={() => onAddSet(exercise)}>
-                  Add set
+                  {t("card.addSet")}
                 </Button>
                 {isExtraUncompleted && targetSet ? (
                   <Button
@@ -272,7 +277,7 @@ export function ExerciseCard({
                       setSelectedSetId(null);
                     }}
                   >
-                    Remove set {targetSet.setNumber}
+                    {t("card.removeSet", { n: targetSet.setNumber })}
                   </Button>
                 ) : null}
               </div>

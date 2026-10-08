@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { Check } from "lucide-react";
 import { useRef } from "react";
 import { fireCelebration } from "@/lib/celebrate";
+import { useIntlLocale, useT } from "@/lib/i18n/client";
 
 gsap.registerPlugin(useGSAP);
 
@@ -30,6 +31,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  */
 export default function FinishedCelebration({ focus, name, durationLabel, sets, volumeKg, exercisesDone, exercisesTotal, recordsCount }: FinishedCelebrationProps) {
   const root = useRef<HTMLDivElement>(null);
+  const t = useT();
+  const intl = useIntlLocale();
 
   useGSAP(
     () => {
@@ -56,7 +59,7 @@ export default function FinishedCelebration({ focus, name, durationLabel, sets, 
               duration: 0.9,
               ease: "power2.out",
               onUpdate: () => {
-                element.textContent = `${Math.round(counter.value).toLocaleString("en-US")}${suffix}`;
+                element.textContent = `${Math.round(counter.value).toLocaleString(intl)}${suffix}`;
               },
             },
             1 + index * 0.08,
@@ -72,9 +75,9 @@ export default function FinishedCelebration({ focus, name, durationLabel, sets, 
   );
 
   const stats = [
-    { label: "Duration", node: <span className="tnum">{durationLabel}</span> },
-    { label: "Sets", node: <span className="tnum" data-count={sets}>{sets.toLocaleString("en-US")}</span> },
-    { label: "Volume", node: <span className="tnum" data-count={Math.round(volumeKg)} data-suffix=" kg">{`${Math.round(volumeKg).toLocaleString("en-US")} kg`}</span> },
+    { label: t("summary.duration"), node: <span className="tnum">{durationLabel}</span> },
+    { label: t("summary.sets"), node: <span className="tnum" data-count={sets}>{sets.toLocaleString(intl)}</span> },
+    { label: t("summary.volume"), node: <span className="tnum" data-count={Math.round(volumeKg)} data-suffix=" kg">{`${Math.round(volumeKg).toLocaleString(intl)} kg`}</span> },
   ];
 
   return (
@@ -101,11 +104,11 @@ export default function FinishedCelebration({ focus, name, durationLabel, sets, 
           </span>
         </div>
         <div className="min-w-0" data-title>
-          <p className="text-sm font-medium text-muted-foreground">Workout complete</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("summary.complete")}</p>
           <h1 className="display-xl truncate">{focus}</h1>
           <p className="truncate text-muted-foreground">
-            {name} · {exercisesDone} of {exercisesTotal} exercises
-            {recordsCount > 0 ? ` · ${recordsCount} ${recordsCount === 1 ? "record" : "records"}` : ""}
+            {name} · {t("summary.exercisesOf", { done: exercisesDone, total: exercisesTotal })}
+            {recordsCount > 0 ? ` · ${t("summary.recordsCount", { count: recordsCount })}` : ""}
           </p>
         </div>
       </header>

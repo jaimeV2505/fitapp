@@ -2,13 +2,15 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { z } from "zod";
 import { MUSCLE_GROUPS } from "@/lib/db/schema/enums";
-import { MUSCLE_LABEL } from "@/lib/muscles";
+import { muscleLabel } from "@/lib/i18n/labels";
+import { titleOf } from "@/lib/i18n/metadata";
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import { LibraryList } from "@/modules/exercises/components/library-list";
 import { browseExercises } from "@/modules/exercises/service";
 import { requireAppUser } from "@/modules/users/app-user";
 
-export const metadata = { title: "Exercise library" };
+export const generateMetadata = titleOf("library.pageTitle");
 
 const paramsSchema = z.object({
   q: z.string().trim().max(60).optional(),
@@ -17,6 +19,7 @@ const paramsSchema = z.object({
 
 export default async function LibraryPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireAppUser();
+  const t = await getT();
   const parsed = paramsSchema.safeParse(await searchParams);
   const filters = parsed.success ? parsed.data : {};
   const items = await browseExercises(user.id, { query: filters.q || undefined, muscle: filters.muscle });
@@ -30,8 +33,8 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col gap-5">
       <header>
-        <p className="text-muted-foreground">Photos, muscles and how-to for every exercise</p>
-        <h1 className="display-xl mt-1">Library</h1>
+        <p className="text-muted-foreground">{t("library.tagline")}</p>
+        <h1 className="display-xl mt-1">{t("library.title")}</h1>
       </header>
 
       <form action="/library" className="relative">
@@ -39,16 +42,16 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         <input
           name="q"
           defaultValue={filters.q ?? ""}
-          placeholder="Search exercises"
-          aria-label="Search exercises"
+          placeholder={t("picker.search")}
+          aria-label={t("picker.search")}
           className="h-12 w-full rounded-xl bg-input pl-10 pr-3 text-base outline-none focus:ring-2 focus:ring-ring"
         />
         {filters.muscle ? <input type="hidden" name="muscle" value={filters.muscle} /> : null}
       </form>
 
-      <nav aria-label="Filter by muscle" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <nav aria-label={t("library.filterByMuscle")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <Link href={filters.q ? `/library?q=${encodeURIComponent(filters.q)}` : "/library"} className={chip(!filters.muscle)}>
-          All
+          {t("picker.all")}
         </Link>
         {MUSCLE_GROUPS.map((muscle) => (
           <Link
@@ -56,13 +59,13 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
             href={`/library?muscle=${muscle}${filters.q ? `&q=${encodeURIComponent(filters.q)}` : ""}`}
             className={chip(filters.muscle === muscle)}
           >
-            {MUSCLE_LABEL[muscle]}
+            {muscleLabel(t, muscle)}
           </Link>
         ))}
       </nav>
 
       <LibraryList items={items} />
-      {items.length === 60 ? <p className="text-center text-sm text-muted-foreground">Showing the first 60. Refine your search to see more.</p> : null}
+      {items.length === 60 ? <p className="text-center text-sm text-muted-foreground">{t("library.firstSixty")}</p> : null}
     </div>
   );
 }

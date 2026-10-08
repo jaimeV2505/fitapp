@@ -1,12 +1,15 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useIntlLocale, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import type { WeekTotals } from "../types";
 
 export function WeeklyVolumeChart({ weeks }: { weeks: readonly WeekTotals[] }) {
+  const t = useT();
+  const intl = useIntlLocale();
   const data = weeks.map((week, index) => ({
-    label: formatShortDate(week.weekStart),
+    label: formatShortDate(week.weekStart, intl),
     volume: week.volumeKg,
     current: index === weeks.length - 1,
   }));
@@ -15,13 +18,13 @@ export function WeeklyVolumeChart({ weeks }: { weeks: readonly WeekTotals[] }) {
   if (!hasData) {
     return (
       <p className="rounded-2xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        Your weekly training volume will appear here after your first finished workout.
+        {t("charts.volumeEmpty")}
       </p>
     );
   }
 
   return (
-    <div className="h-52 w-full" role="img" aria-label="Training volume per week for the last eight weeks">
+    <div className="h-52 w-full" role="img" aria-label={t("charts.volumeAria")}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -8 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -41,8 +44,8 @@ export function WeeklyVolumeChart({ weeks }: { weeks: readonly WeekTotals[] }) {
               borderRadius: 12,
               color: "var(--foreground)",
             }}
-            formatter={(value) => [`${Number(value).toLocaleString("en-US")} kg`, "Volume"]}
-            labelFormatter={(label) => `Week of ${String(label)}`}
+            formatter={(value) => [`${Number(value).toLocaleString(intl)} kg`, t("charts.volume")]}
+            labelFormatter={(label) => t("charts.weekOf", { date: String(label) })}
           />
           <Bar dataKey="volume" radius={[8, 8, 0, 0]} animationDuration={700}>
             {data.map((entry) => (

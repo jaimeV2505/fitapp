@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NumberField } from "@/components/ui/number-field";
 import { Sheet } from "@/components/ui/sheet";
+import { useT } from "@/lib/i18n/client";
 import { saveTargetsAction } from "../actions";
 import type { NutritionTargets } from "../types";
 
@@ -18,6 +19,7 @@ interface TargetsSheetProps {
 /** Daily targets are entered by you. The app does not suggest numbers. */
 export function TargetsSheet({ open, onOpenChange, targets }: TargetsSheetProps) {
   const router = useRouter();
+  const t = useT();
   const [draft, setDraft] = useState<NutritionTargets>(targets);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -32,7 +34,7 @@ export function TargetsSheet({ open, onOpenChange, targets }: TargetsSheetProps)
         fat: draft.fat === null ? null : Math.round(draft.fat),
       });
       if (!result.ok) return setError(result.error);
-      toast.success("Targets saved");
+      toast.success(t("targets.saved"));
       onOpenChange(false);
       router.refresh();
     });
@@ -42,21 +44,21 @@ export function TargetsSheet({ open, onOpenChange, targets }: TargetsSheetProps)
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Daily targets"
+      title={t("targets.title")}
       footer={
         <Button size="lg" className="w-full" onClick={save} disabled={pending}>
-          {pending ? "Saving…" : "Save targets"}
+          {pending ? t("targets.saving") : t("targets.save")}
         </Button>
       }
     >
       <p className="mb-4 text-sm text-muted-foreground">
-        Set the numbers you want to aim for. Leave a field empty to track it without a target.
+        {t("targets.intro")}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        <NumberField label="Calories" suffix="kcal" decimal={false} value={draft.calories} onChange={(calories) => setDraft((d) => ({ ...d, calories }))} />
-        <NumberField label="Protein" suffix="g" decimal={false} value={draft.protein} onChange={(protein) => setDraft((d) => ({ ...d, protein }))} />
-        <NumberField label="Carbs" suffix="g" decimal={false} value={draft.carbs} onChange={(carbs) => setDraft((d) => ({ ...d, carbs }))} />
-        <NumberField label="Fat" suffix="g" decimal={false} value={draft.fat} onChange={(fat) => setDraft((d) => ({ ...d, fat }))} />
+        <NumberField label={t("nutrition.calories")} suffix="kcal" decimal={false} value={draft.calories} onChange={(calories) => setDraft((d) => ({ ...d, calories }))} />
+        <NumberField label={t("nutrition.protein")} suffix="g" decimal={false} value={draft.protein} onChange={(protein) => setDraft((d) => ({ ...d, protein }))} />
+        <NumberField label={t("nutrition.carbs")} suffix="g" decimal={false} value={draft.carbs} onChange={(carbs) => setDraft((d) => ({ ...d, carbs }))} />
+        <NumberField label={t("nutrition.fat")} suffix="g" decimal={false} value={draft.fat} onChange={(fat) => setDraft((d) => ({ ...d, fat }))} />
       </div>
       {error ? (
         <p role="alert" className="mt-4 text-sm text-destructive">

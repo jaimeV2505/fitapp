@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/client";
 import { spring } from "@/lib/motion";
 
 interface NumberStepperProps {
@@ -40,6 +41,7 @@ const stepButton =
 export function NumberStepper({ label, unit, value, step, min = 0, max = 999, decimal = false, onChange }: NumberStepperProps) {
   // While the field is focused we show exactly what was typed; otherwise the formatted value.
   const [draft, setDraft] = useState<string | null>(null);
+  const t = useT();
   const shown = draft ?? format(value);
 
   return (
@@ -50,7 +52,7 @@ export function NumberStepper({ label, unit, value, step, min = 0, max = 999, de
           type="button"
           whileTap={{ scale: 0.88 }}
           transition={spring.snappy}
-          aria-label={`Decrease ${label.toLowerCase()}`}
+          aria-label={t("stepper.decrease", { label: label.toLowerCase() })}
           className={stepButton}
           disabled={value !== null && value <= min}
           onClick={() => onChange(clamp((value ?? 0) - step, min, max))}
@@ -84,7 +86,7 @@ export function NumberStepper({ label, unit, value, step, min = 0, max = 999, de
           type="button"
           whileTap={{ scale: 0.88 }}
           transition={spring.snappy}
-          aria-label={`Increase ${label.toLowerCase()}`}
+          aria-label={t("stepper.increase", { label: label.toLowerCase() })}
           className={stepButton}
           disabled={value !== null && value >= max}
           onClick={() => onChange(clamp((value ?? 0) + step, min, max))}

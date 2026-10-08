@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { EQUIPMENT, MOVEMENT_TYPES, MUSCLE_GROUPS, type Equipment, type MovementType, type MuscleGroup } from "@/lib/db/schema/enums";
-import { MUSCLE_LABEL } from "@/lib/muscles";
+import { useLocalizedName, useT } from "@/lib/i18n/client";
+import { equipmentLabel, muscleLabel } from "@/lib/i18n/labels";
 import { cn } from "@/lib/utils";
 import { createExerciseAction, searchExercisesAction } from "../actions";
 import type { ExerciseListItem } from "../types";
@@ -19,6 +20,8 @@ interface ExercisePickerProps {
 
 /** Search the exercise library and pick one. Mount it only while it is open. */
 export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) {
+  const t = useT();
+  const localName = useLocalizedName();
   const [query, setQuery] = useState("");
   const [muscle, setMuscle] = useState<MuscleGroup | null>(null);
   const [loaded, setLoaded] = useState<{ key: string; items: ExerciseListItem[]; error: string | null } | null>(null);
@@ -67,12 +70,12 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
     cn("h-9 shrink-0 rounded-full px-3 text-sm font-semibold transition-colors", active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground");
 
   return (
-    <Sheet open onOpenChange={(open) => (open ? undefined : onClose())} title={creating ? "New exercise" : title}>
+    <Sheet open onOpenChange={(open) => (open ? undefined : onClose())} title={creating ? t("picker.newExercise") : title}>
       {creating ? (
         <div className="flex flex-col gap-4">
           <div>
             <label htmlFor="custom-name" className="mb-1.5 block text-sm font-medium text-muted-foreground">
-              Name
+              {t("picker.name")}
             </label>
             <input
               id="custom-name"
@@ -80,36 +83,36 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
               value={draft.name}
               onChange={(event) => setDraft((d) => ({ ...d, name: event.target.value }))}
               maxLength={80}
-              placeholder="e.g. Cable crunch"
+              placeholder={t("picker.namePlaceholder")}
               className="h-12 w-full rounded-xl bg-input px-3 text-base outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
-            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Main muscle</p>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Main muscle">
+            <p className="mb-1.5 text-sm font-medium text-muted-foreground">{t("picker.mainMuscle")}</p>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("picker.mainMuscle")}>
               {MUSCLE_GROUPS.map((group) => (
                 <button key={group} type="button" role="radio" aria-checked={draft.muscle === group} onClick={() => setDraft((d) => ({ ...d, muscle: group }))} className={chip(draft.muscle === group)}>
-                  {MUSCLE_LABEL[group]}
+                  {muscleLabel(t, group)}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Equipment</p>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Equipment">
+            <p className="mb-1.5 text-sm font-medium text-muted-foreground">{t("picker.equipment")}</p>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("picker.equipment")}>
               {[null, ...EQUIPMENT].map((item) => (
                 <button key={item ?? "none"} type="button" role="radio" aria-checked={draft.equipment === item} onClick={() => setDraft((d) => ({ ...d, equipment: item }))} className={chip(draft.equipment === item)}>
-                  {item ?? "Not set"}
+                  {item ? equipmentLabel(t, item) : t("picker.notSet")}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-1.5 text-sm font-medium text-muted-foreground">Type</p>
-            <div className="flex gap-2" role="radiogroup" aria-label="Type">
+            <p className="mb-1.5 text-sm font-medium text-muted-foreground">{t("picker.type")}</p>
+            <div className="flex gap-2" role="radiogroup" aria-label={t("picker.type")}>
               {MOVEMENT_TYPES.map((type) => (
                 <button key={type} type="button" role="radio" aria-checked={draft.type === type} onClick={() => setDraft((d) => ({ ...d, type }))} className={chip(draft.type === type)}>
-                  {type}
+                  {t(`picker.${type}`)}
                 </button>
               ))}
             </div>
@@ -120,10 +123,10 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
             </p>
           ) : null}
           <Button size="lg" onClick={create} disabled={saving || draft.name.trim().length < 2}>
-            {saving ? "Creating…" : "Create and use"}
+            {saving ? t("picker.creating") : t("picker.createUse")}
           </Button>
           <Button variant="ghost" onClick={() => setCreating(false)}>
-            Back to search
+            {t("picker.backToSearch")}
           </Button>
         </div>
       ) : (
@@ -134,12 +137,12 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search exercises"
-            aria-label="Search exercises"
+            placeholder={t("picker.search")}
+            aria-label={t("picker.search")}
             className="h-12 w-full rounded-xl bg-input pl-10 pr-3 text-base outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1" role="radiogroup" aria-label="Muscle">
+        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1" role="radiogroup" aria-label={t("picker.muscle")}>
           {[null, ...MUSCLE_GROUPS].map((group) => (
             <button
               key={group ?? "all"}
@@ -152,7 +155,7 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
                 muscle === group ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
               )}
             >
-              {group ? MUSCLE_LABEL[group] : "All"}
+              {group ? muscleLabel(t, group) : t("picker.all")}
             </button>
           ))}
         </div>
@@ -171,22 +174,22 @@ export function ExercisePicker({ title, onPick, onClose }: ExercisePickerProps) 
                 onClick={() => onPick(item)}
                 className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-muted"
               >
-                <ExerciseThumb src={item.imageUrl ?? undefined} name={item.name} muscle={item.primaryMuscle} className="size-12" sizes="48px" />
+                <ExerciseThumb src={item.imageUrl ?? undefined} name={localName(item.name)} muscle={item.primaryMuscle} className="size-12" sizes="48px" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{item.name}</span>
+                  <span className="block truncate font-semibold">{localName(item.name)}</span>
                   <span className="block truncate text-sm text-muted-foreground">
-                    {MUSCLE_LABEL[item.primaryMuscle]}
-                    {item.equipment ? ` · ${item.equipment}` : ""}
+                    {muscleLabel(t, item.primaryMuscle)}
+                    {item.equipment ? ` · ${equipmentLabel(t, item.equipment)}` : ""}
                   </span>
                 </span>
               </button>
             </li>
           ))}
-          {!loading && loaded && loaded.items.length === 0 ? <li className="py-8 text-center text-sm text-muted-foreground">No exercises found.</li> : null}
+          {!loading && loaded && loaded.items.length === 0 ? <li className="py-8 text-center text-sm text-muted-foreground">{t("picker.none")}</li> : null}
         </ul>
 
         <Button variant="secondary" onClick={() => setCreating(true)}>
-          <Plus className="size-5" /> Can&rsquo;t find it? Create your own
+          <Plus className="size-5" /> {t("picker.create")}
         </Button>
       </div>
       )}

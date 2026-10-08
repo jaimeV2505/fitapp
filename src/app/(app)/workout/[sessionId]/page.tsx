@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { titleOf } from "@/lib/i18n/metadata";
 import { requireAppUser } from "@/modules/users/app-user";
 import { getUserSettings } from "@/modules/settings/repository";
 import { WorkoutLogger } from "@/modules/workouts/components/workout-logger";
@@ -6,7 +7,7 @@ import { WorkoutSummary } from "@/modules/workouts/components/workout-summary";
 import { getSession, getSessionRecords } from "@/modules/workouts/service";
 import { sessionIdSchema } from "@/modules/workouts/validators";
 
-export const metadata = { title: "Workout" };
+export const generateMetadata = titleOf("nav.workout");
 
 export default async function WorkoutSessionPage({
   params,

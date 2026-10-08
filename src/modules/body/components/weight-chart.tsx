@@ -1,21 +1,24 @@
 "use client";
 
 import { CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useIntlLocale, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import type { WeightPoint } from "../domain/series";
 
 export function WeightChart({ points }: { points: readonly WeightPoint[] }) {
+  const t = useT();
+  const intl = useIntlLocale();
   if (points.length < 2) {
     return (
       <p className="rounded-xl bg-muted/60 px-4 py-8 text-center text-sm text-muted-foreground">
-        Log your weight on two different days to see the trend.
+        {t("body.chartEmpty")}
       </p>
     );
   }
-  const data = points.map((p) => ({ label: formatShortDate(p.localDate), weight: p.weightKg, average: p.averageKg }));
+  const data = points.map((p) => ({ label: formatShortDate(p.localDate, intl), weight: p.weightKg, average: p.averageKg }));
 
   return (
-    <div className="h-56 w-full" role="img" aria-label="Body weight over time with a 7-day moving average">
+    <div className="h-56 w-full" role="img" aria-label={t("body.chartAria")}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
@@ -24,7 +27,7 @@ export function WeightChart({ points }: { points: readonly WeightPoint[] }) {
           <Tooltip
             cursor={{ stroke: "var(--border)" }}
             contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, color: "var(--foreground)" }}
-            formatter={(value, name) => [`${value} kg`, name === "average" ? "7-day average" : "Weigh-in"]}
+            formatter={(value, name) => [`${value} kg`, name === "average" ? t("body.average") : t("body.weighIn")]}
           />
           <Line type="monotone" dataKey="weight" stroke="var(--muted-foreground)" strokeWidth={1.5} strokeOpacity={0.6} dot={{ r: 3, fill: "var(--muted-foreground)", strokeWidth: 0 }} activeDot={false} />
           <Line type="monotone" dataKey="average" stroke="var(--primary)" strokeWidth={3.5} dot={false} animationDuration={600} />

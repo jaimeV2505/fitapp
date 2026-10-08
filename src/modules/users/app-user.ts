@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { requireUser, type SessionUser } from "@/lib/auth/session";
 import { env } from "@/lib/env";
+import { findUserSettings } from "@/modules/settings/repository";
 import { ensureUserProvisioned } from "./provisioning";
 
 /**
@@ -11,6 +12,8 @@ import { ensureUserProvisioned } from "./provisioning";
  */
 export const requireAppUser = cache(async (): Promise<SessionUser> => {
   const user = await requireUser();
-  await ensureUserProvisioned(user.id, env.DEFAULT_TIMEZONE);
+  // The settings row doubles as the "account is set up" marker. It is cached for the request, so the page that
+  // follows reuses this very query instead of asking again.
+  if (!(await findUserSettings(user.id))) await ensureUserProvisioned(user.id, env.DEFAULT_TIMEZONE);
   return user;
 });

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { NumberField } from "@/components/ui/number-field";
 import { Sheet } from "@/components/ui/sheet";
+import { useLocalizedName, useT } from "@/lib/i18n/client";
 import { deleteFoodAction, saveFoodAction } from "../actions";
 import type { FoodView } from "../types";
 
@@ -55,12 +56,17 @@ function toDraft(food: FoodView): Draft {
 
 export function FoodsManager({ foods }: { foods: FoodView[] }) {
   const router = useRouter();
+  const t = useT();
+  const localName = useLocalizedName();
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const shown = foods.filter((food) => food.name.toLowerCase().includes(query.trim().toLowerCase()));
+  const shown = foods.filter((food) => {
+    const q = query.trim().toLowerCase();
+    return food.name.toLowerCase().includes(q) || localName(food.name).toLowerCase().includes(q);
+  });
 
   function save() {
     if (!draft) return;
@@ -78,7 +84,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
         pieceGrams: draft.pieceLabel.trim() === "" ? null : draft.pieceGrams,
       });
       if (!result.ok) return setError(result.error);
-      toast.success(draft.id ? "Food updated" : "Food added");
+      toast.success(draft.id ? t("foodsManager.updated") : t("foodsManager.added"));
       setDraft(null);
       router.refresh();
     });
@@ -90,7 +96,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
     startTransition(async () => {
       const result = await deleteFoodAction({ id });
       if (!result.ok) return setError(result.error);
-      toast.success("Food deleted");
+      toast.success(t("foodsManager.deleted"));
       setDraft(null);
       router.refresh();
     });
@@ -104,8 +110,8 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search foods"
-            aria-label="Search foods"
+            placeholder={t("foodsManager.search")}
+            aria-label={t("foodsManager.search")}
             className={`${textInput} pl-10`}
           />
         </div>
@@ -115,7 +121,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
             setDraft(BLANK);
           }}
         >
-          <Plus className="size-5" /> New
+          <Plus className="size-5" /> {t("foodsManager.new")}
         </Button>
       </div>
 
@@ -124,13 +130,13 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
           <li key={food.id}>
             <Card className="flex items-center gap-3 p-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{food.name}</p>
+                <p className="truncate font-semibold">{localName(food.name)}</p>
                 <p className="tnum truncate text-sm text-muted-foreground">
-                  {Math.round(food.caloriesPer100)} kcal · P {food.proteinPer100} · C {food.carbsPer100} · F {food.fatPer100} per 100 g
-                  {food.pieceLabel && food.pieceGrams ? ` · 1 ${food.pieceLabel} = ${food.pieceGrams} g` : ""}
+                  {t("foodsManager.line", { kcal: Math.round(food.caloriesPer100), p: food.proteinPer100, c: food.carbsPer100, f: food.fatPer100 })}
+                  {food.pieceLabel && food.pieceGrams ? t("foodsManager.piece", { label: localName(food.pieceLabel), grams: food.pieceGrams }) : ""}
                 </p>
                 {food.nutritionSource === "seed_estimate" ? (
-                  <p className="text-xs text-muted-foreground">Generic estimate. Edit it to match your label.</p>
+                  <p className="text-xs text-muted-foreground">{t("foodsManager.estimate")}</p>
                 ) : null}
               </div>
               <button
@@ -139,7 +145,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
                   setError(null);
                   setDraft(toDraft(food));
                 }}
-                aria-label={`Edit ${food.name}`}
+                aria-label={t("foodsManager.edit", { name: localName(food.name) })}
                 className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
               >
                 <Pencil className="size-5" />
@@ -147,7 +153,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
             </Card>
           </li>
         ))}
-        {shown.length === 0 ? <li className="py-8 text-center text-muted-foreground">No foods match “{query}”.</li> : null}
+        {shown.length === 0 ? <li className="py-8 text-center text-muted-foreground">{t("foodsManager.noMatch", { query })}</li> : null}
       </ul>
 
       {draft ? (
@@ -156,7 +162,7 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
           onOpenChange={(open) => {
             if (!open) setDraft(null);
           }}
-          title={draft.id ? "Edit food" : "New food"}
+          title={draft.id ? t("foodsManager.editFood") : t("foodsManager.newFood")}
           footer={
             <div className="flex flex-col gap-2">
               {error ? (
@@ -165,11 +171,11 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
                 </p>
               ) : null}
               <Button size="lg" onClick={save} disabled={pending || draft.name.trim() === ""}>
-                {pending ? "Saving…" : "Save food"}
+                {pending ? t("foodsManager.saving") : t("foodsManager.save")}
               </Button>
               {draft.id && !draft.isBuiltIn ? (
                 <Button variant="ghost" onClick={remove} disabled={pending}>
-                  Delete food
+                  {t("foodsManager.deleteFood")}
                 </Button>
               ) : null}
             </div>
@@ -178,37 +184,37 @@ export function FoodsManager({ foods }: { foods: FoodView[] }) {
           <div className="flex flex-col gap-4">
             {draft.isBuiltIn ? (
               <p className="rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
-                This is a built-in food. Saving creates your own version and updates your meal templates to use it.
+                {t("foodsManager.builtIn")}
               </p>
             ) : null}
             <div>
               <label htmlFor="food-name" className="mb-1.5 block text-sm font-medium text-muted-foreground">
-                Name
+                {t("foodsManager.name")}
               </label>
               <input id="food-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className={textInput} maxLength={80} />
             </div>
             <div>
               <label htmlFor="food-brand" className="mb-1.5 block text-sm font-medium text-muted-foreground">
-                Brand (optional)
+                {t("foodsManager.brand")}
               </label>
               <input id="food-brand" value={draft.brand} onChange={(e) => setDraft({ ...draft, brand: e.target.value })} className={textInput} maxLength={60} />
             </div>
-            <p className="text-sm font-semibold">Nutrition per 100 g</p>
+            <p className="text-sm font-semibold">{t("foodsManager.per100")}</p>
             <div className="grid grid-cols-2 gap-3">
-              <NumberField label="Calories" suffix="kcal" value={draft.caloriesPer100} onChange={(v) => setDraft({ ...draft, caloriesPer100: v })} />
-              <NumberField label="Protein" suffix="g" value={draft.proteinPer100} onChange={(v) => setDraft({ ...draft, proteinPer100: v })} />
-              <NumberField label="Carbs" suffix="g" value={draft.carbsPer100} onChange={(v) => setDraft({ ...draft, carbsPer100: v })} />
-              <NumberField label="Fat" suffix="g" value={draft.fatPer100} onChange={(v) => setDraft({ ...draft, fatPer100: v })} />
+              <NumberField label={t("nutrition.calories")} suffix="kcal" value={draft.caloriesPer100} onChange={(v) => setDraft({ ...draft, caloriesPer100: v })} />
+              <NumberField label={t("nutrition.protein")} suffix="g" value={draft.proteinPer100} onChange={(v) => setDraft({ ...draft, proteinPer100: v })} />
+              <NumberField label={t("nutrition.carbs")} suffix="g" value={draft.carbsPer100} onChange={(v) => setDraft({ ...draft, carbsPer100: v })} />
+              <NumberField label={t("nutrition.fat")} suffix="g" value={draft.fatPer100} onChange={(v) => setDraft({ ...draft, fatPer100: v })} />
             </div>
-            <p className="text-sm font-semibold">Natural piece (optional)</p>
+            <p className="text-sm font-semibold">{t("foodsManager.naturalPiece")}</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="food-piece" className="mb-1.5 block text-sm font-medium text-muted-foreground">
-                  Name, e.g. egg
+                  {t("foodsManager.pieceName")}
                 </label>
                 <input id="food-piece" value={draft.pieceLabel} onChange={(e) => setDraft({ ...draft, pieceLabel: e.target.value })} className={textInput} maxLength={24} />
               </div>
-              <NumberField label="Weight of one" suffix="g" value={draft.pieceGrams} onChange={(v) => setDraft({ ...draft, pieceGrams: v })} />
+              <NumberField label={t("foodsManager.pieceWeight")} suffix="g" value={draft.pieceGrams} onChange={(v) => setDraft({ ...draft, pieceGrams: v })} />
             </div>
           </div>
         </Sheet>

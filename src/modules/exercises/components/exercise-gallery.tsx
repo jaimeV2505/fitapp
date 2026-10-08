@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { Dumbbell } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { cdnUrl } from "@/lib/images";
+import { useT } from "@/lib/i18n/client";
 
 interface ExerciseGalleryProps {
   images: readonly string[];
@@ -16,6 +18,7 @@ interface ExerciseGalleryProps {
  */
 export function ExerciseGallery({ images, name }: ExerciseGalleryProps) {
   const reduceMotion = useReducedMotion();
+  const t = useT();
   const [index, setIndex] = useState(0);
   const [broken, setBroken] = useState(false);
 
@@ -37,7 +40,7 @@ export function ExerciseGallery({ images, name }: ExerciseGalleryProps) {
     <button
       type="button"
       onClick={() => setIndex((current) => (current + 1) % images.length)}
-      aria-label={`${name}: show next position`}
+      aria-label={t("exercise.showNext", { name })}
       className="ink-photo relative block aspect-[4/3] w-full overflow-hidden rounded-2xl"
     >
       {images.map((src, i) => (
@@ -49,8 +52,8 @@ export function ExerciseGallery({ images, name }: ExerciseGalleryProps) {
           transition={{ duration: 0.35, ease: "easeInOut" }}
         >
           <Image
-            src={src}
-            alt={i === 0 ? `${name}, start position` : `${name}, end position`}
+            src={cdnUrl(src)}
+            alt={i === 0 ? t("exercise.startPosition", { name }) : t("exercise.endPosition", { name })}
             fill
             sizes="(max-width: 640px) 100vw, 560px"
             unoptimized
