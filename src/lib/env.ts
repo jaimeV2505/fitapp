@@ -28,12 +28,26 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/** Pasted values often carry stray spaces, newlines or quotes. Normalise them instead of failing the deploy. */
+function clean(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  const unquoted = /^(["']).*\1$/.test(trimmed) ? trimmed.slice(1, -1).trim() : trimmed;
+  return unquoted;
+}
+
 /**
- * Vercel's Postgres integrations (Neon, Supabase...) may name the connection string POSTGRES_URL instead of
- * DATABASE_URL. Accept either so the deployment works with whatever the integration created.
+ * Cleans the raw environment and accepts provider aliases: Vercel's Postgres integrations (Neon, Supabase...)
+ * may name the connection string POSTGRES_URL instead of DATABASE_URL.
  */
 function withProviderAliases(source: NodeJS.ProcessEnv): Record<string, string | undefined> {
-  return { ...source, DATABASE_URL: source.DATABASE_URL ?? source.POSTGRES_URL };
+  const cleaned: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(source)) cleaned[key] = clean(value);
+  return {
+    ...cleaned,
+    DATABASE_URL: cleaned.DATABASE_URL ?? cleaned.POSTGRES_URL,
+    ALLOW_SIGNUP: cleaned.ALLOW_SIGNUP?.toLowerCase(),
+  };
 }
 
 function parseEnv(): Env {
