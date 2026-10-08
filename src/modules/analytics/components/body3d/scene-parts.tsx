@@ -36,6 +36,29 @@ export function useMaterials(baseColor: string, neutralColor: string): Materials
 }
 
 /**
+ * Moves one muscle's material a step towards its heat colour and glow. Returns true while it is still moving.
+ * A plain function (not inline in the render callback) because it changes the material in place, which is what
+ * the scene needs and what the React lint rule only allows outside the component.
+ */
+function stepMaterial(material: MeshStandardMaterial, target: Color, glow: number, ease: number): boolean {
+  let moving = false;
+  const distance = Math.abs(material.color.r - target.r) + Math.abs(material.color.g - target.g) + Math.abs(material.color.b - target.b);
+  if (distance > 0.004) {
+    material.color.lerp(target, ease);
+    moving = true;
+  } else {
+    material.color.copy(target);
+  }
+  if (Math.abs(material.emissiveIntensity - glow) > 0.01) {
+    material.emissiveIntensity += (glow - material.emissiveIntensity) * ease;
+    moving = true;
+  } else {
+    material.emissiveIntensity = glow;
+  }
+  return moving;
+}
+
+/**
  * Eases each muscle from the neutral tone to its heat colour (the muscles "warm up" when the view opens) and
  * lights the selected one. The scene only redraws while something is still moving.
  */
@@ -54,20 +77,7 @@ export function HeatDriver({ cells, selected, materials, baseColor }: { cells: r
       const material = materials.byMuscle[muscle];
       const target = targets.get(muscle);
       if (!target) continue;
-      const distance = Math.abs(material.color.r - target.r) + Math.abs(material.color.g - target.g) + Math.abs(material.color.b - target.b);
-      if (distance > 0.004) {
-        material.color.lerp(target, ease);
-        moving = true;
-      } else {
-        material.color.copy(target);
-      }
-      const glow = selected === muscle ? 0.45 : 0;
-      if (Math.abs(material.emissiveIntensity - glow) > 0.01) {
-        material.emissiveIntensity += (glow - material.emissiveIntensity) * ease;
-        moving = true;
-      } else {
-        material.emissiveIntensity = glow;
-      }
+      if (stepMaterial(material, target, selected === muscle ? 0.45 : 0, ease)) moving = true;
     }
     if (moving) invalidate();
   });

@@ -12,5 +12,5 @@ test-results
 playwright-report
 .DS_Store
 .vercel
-.next-build
+backups
 .pnpm-store

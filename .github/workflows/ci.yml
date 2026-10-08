@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: fitapp
+          POSTGRES_PASSWORD: fitapp
+          POSTGRES_DB: fitapp
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U fitapp -d fitapp"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://fitapp:fitapp@localhost:5432/fitapp
+      BETTER_AUTH_SECRET: ci-only-secret-0123456789abcdef0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      ALLOW_SIGNUP: "true"
+      DEFAULT_TIMEZONE: Europe/Stockholm
+      E2E_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - name: Database migrations are committed
+        run: test -f drizzle/meta/_journal.json || (echo "drizzle/ is missing from the repository"; exit 1)
+      - uses: pnpm/action-setup@v4 # version comes from "packageManager" in package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck, lint, unit tests
+        run: pnpm check
+      - name: Apply migrations to an empty database
+        run: pnpm db:migrate
+      - name: Seed catalogs
+        run: pnpm db:seed
+      - run: pnpm build
+      - name: Start the app
+        run: |
+          pnpm start &
+          curl --retry 30 --retry-connection-refused --retry-delay 2 --fail http://localhost:3000/api/health
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7

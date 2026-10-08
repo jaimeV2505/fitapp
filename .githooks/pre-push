@@ -1,0 +1,8 @@
+#!/bin/sh
+# Blocks a push whose latest commit lost the database migrations. Enable once with:
+#   git config core.hooksPath .githooks
+if ! sh scripts/check-migrations.sh; then
+  echo ""
+  echo "Push blocked: fix the migrations first (see above), then push again."
+  exit 1
+fi
