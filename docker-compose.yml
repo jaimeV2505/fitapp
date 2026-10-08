@@ -1,0 +1,82 @@
+# Development stack: `docker compose up`
+# Open http://localhost:${APP_PORT:-3001} (default 3001) once the app container reports healthy.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fitapp
+      POSTGRES_PASSWORD: fitapp
+      POSTGRES_DB: fitapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fitapp -d fitapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      target: dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3001}:3000"
+    environment:
+      DATABASE_URL: postgres://fitapp:fitapp@postgres:5432/fitapp
+      BETTER_AUTH_URL: http://localhost:${APP_PORT:-3001}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-only-secret-change-me-0123456789abcdef}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-true}
+      DEFAULT_TIMEZONE: ${DEFAULT_TIMEZONE:-Europe/Stockholm}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      STORAGE_DRIVER: local
+      LOCAL_STORAGE_DIR: /app/.data/uploads
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      # Keep container-installed dependencies; do not shadow them with the host's node_modules.
+      - app-node-modules:/app/node_modules
+      - app-next-cache:/app/.next
+      - app-uploads:/app/.data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  # End-to-end tests in a container that already has a browser: `pnpm test:e2e:docker`.
+  # They only need @playwright/test, so nothing heavy is installed on your machine.
+  e2e:
+    profiles: ["e2e"]
+    image: mcr.microsoft.com/playwright:v1.56.0-noble
+    working_dir: /work
+    init: true
+    ipc: host
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      E2E_BASE_URL: http://app:3000
+    volumes:
+      - ./tests/e2e:/work/tests/e2e:ro
+      - ./playwright.config.ts:/work/playwright.config.ts:ro
+      - ./test-results:/work/test-results
+      - ./playwright-report:/work/playwright-report
+    command:
+      - sh
+      - -c
+      - npm init -y >/dev/null 2>&1 && npm install --no-audit --no-fund --silent --save-dev @playwright/test@1.56.0 && npx playwright test
+
+volumes:
+  postgres-data:
+  app-node-modules:
+  app-next-cache:
+  app-uploads:

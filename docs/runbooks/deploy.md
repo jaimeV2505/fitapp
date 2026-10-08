@@ -1,0 +1,91 @@
+# Deploy runbook: GitHub -> Vercel
+
+Target: a **private** GitHub repository, Vercel for hosting, a managed Postgres (Neon via the Vercel Marketplace is the easiest), Vercel Blob for food photos.
+
+## 0. Before the first push (on your machine)
+
+The Docker app container has every dependency installed, so run the checks there. `next build` (which Vercel runs) fails on type errors, so fix them first.
+
+```
+docker compose exec app pnpm typecheck
+docker compose exec app pnpm lint
+docker compose exec app pnpm test
+```
+
+Also confirm these files exist and will be committed: `pnpm-lock.yaml` and `drizzle/` (migrations).
+
+## 1. GitHub
+
+```
+cd ~/Downloads/fitapp
+git init -b main
+git add .
+git ls-files | grep -E '(^|/)\.env($|\.)'      # must print only .env.example
+git ls-files | grep -E '^(backups|node_modules|\.data)/' # must print nothing
+git commit -m "Initial commit"
+```
+
+Create the repository (private) and push, either with the GitHub CLI
+
+```
+gh repo create fitapp --private --source=. --remote=origin --push
+```
+
+or on github.com (New repository, private, no README) and then
+
+```
+git remote add origin git@github.com:<you>/fitapp.git
+git push -u origin main
+```
+
+The CI workflow (`.github/workflows/ci.yml`) starts running on that first push.
+
+## 2. Database
+
+In Vercel, after importing the project (step 3): **Storage -> Create -> Neon (Postgres)** and connect it to the project. Pick a region near your functions (the project asks for `arn1`, Stockholm). It adds `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct). Migrations use the unpooled one automatically.
+
+## 3. Vercel project
+
+1. vercel.com -> **Add New -> Project** -> import the GitHub repository. Framework: Next.js. Leave the build and install commands: `vercel.json` sets them.
+2. Storage -> **Blob** -> create a store and connect it (adds `BLOB_READ_WRITE_TOKEN`).
+3. Environment variables (Production; add the ones marked * to Preview as well):
+
+| Variable | Value |
+|----------|-------|
+| `BETTER_AUTH_SECRET` * | a new secret: `openssl rand -base64 32` (not the dev one) |
+| `BETTER_AUTH_URL` | your production URL, e.g. `https://fitapp.yourdomain.com` (or the `.vercel.app` URL) |
+| `ALLOW_SIGNUP` | `true` for the first deploy, then `false` |
+| `DEFAULT_TIMEZONE` * | `Europe/Stockholm` |
+| `STORAGE_DRIVER` | `vercel-blob` |
+| `ANTHROPIC_API_KEY` | your key (food photo estimates) |
+| `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5-5` |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `BLOB_READ_WRITE_TOKEN` | added by the integrations |
+
+Preview deployments need `DATABASE_URL` (a separate database or Neon branch, never production's) and `BETTER_AUTH_SECRET` to build; they sign in at their own URL automatically.
+
+4. **Deploy.** The production build runs `pnpm db:migrate` then `pnpm db:seed` (idempotent: built-in exercises, foods and the exercise library), then builds.
+
+## 4. After the first deploy
+
+1. Open the site and create your account (registration is open).
+2. Set `ALLOW_SIGNUP=false` in Vercel and redeploy, so nobody else can register.
+3. Log a set and a meal. Take a food photo. Check Vercel -> Logs if anything fails.
+4. Add a custom domain (Settings -> Domains) and update `BETTER_AUTH_URL` to it, then redeploy.
+
+## Ongoing
+
+- Every push to `main` deploys to production; pull requests get preview URLs.
+- Schema change: `pnpm db:generate`, commit the new migration with the code. The next production build applies it **before** the new code goes live, so keep migrations backward compatible (add first, remove later; see `database.md`).
+- Backups: use the provider's point-in-time recovery plus a scheduled dump (see `database.md`).
+- Vercel Hobby is for personal, non-commercial use. Move to Pro before charging users.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---------|--------------|
+| Build fails with a TypeScript error | Run `docker compose exec app pnpm typecheck` locally and fix it. |
+| Build fails at `db:migrate` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
+| Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
+| Sign-in loops or "invalid origin" | `BETTER_AUTH_URL` does not match the address you open. |
+| Food photo times out | Check `ANTHROPIC_API_KEY`; the page allows 60 s (`maxDuration`). |
+| Photos do not load | `STORAGE_DRIVER=vercel-blob` and a connected Blob store are required in production. |

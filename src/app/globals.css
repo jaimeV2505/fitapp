@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens.
+ * Light: cool paper with graphite ink. Dark: deep graphite, not pure black.
+ * One accent (cobalt) for actions; green is reserved for completed work.
+ */
+:root {
+  /* "Iron & ink": navy ink from engraved gym illustrations + the colours of Olympic plates. */
+  --background: #f3f4f8;
+  --foreground: #131a44;
+  --card: #ffffff;
+  --card-foreground: #131a44;
+  --muted: #e7e9f2;
+  --muted-foreground: #565e8c;
+  --border: #d5d9e8;
+  --input: #eceef6;
+  --ink: #1b2154;
+  --primary: #1b2154;
+  --primary-foreground: #ffffff;
+  --accent: #f2b90f;
+  --accent-foreground: #131a44;
+  --success: #1c9658;
+  --success-soft: #d9f2e4;
+  --destructive: #d32f2f;
+  --ring: #1b2154;
+  --plate-red: #d7352b;
+  --plate-blue: #2a5cc8;
+  --plate-yellow: #f2b90f;
+  --plate-green: #1c9658;
+  --plate-white: #f4f5fa;
+  --card-shadow: 0 1px 0 rgb(19 26 68 / 0.05);
+}
+
+.dark {
+  --background: #0c1030;
+  --foreground: #eef0fa;
+  --card: #141a42;
+  --card-foreground: #eef0fa;
+  --muted: #1d2556;
+  --muted-foreground: #9ca4d6;
+  --border: #2a3270;
+  --input: #1d2556;
+  --ink: #0c1030;
+  --primary: #f4c531;
+  --primary-foreground: #101640;
+  --accent: #f4c531;
+  --accent-foreground: #101640;
+  --success: #3dcb82;
+  --success-soft: #123b2c;
+  --destructive: #ff6b63;
+  --ring: #f4c531;
+  --plate-red: #e5483d;
+  --plate-blue: #4c7bea;
+  --plate-yellow: #f4c531;
+  --plate-green: #2fb56f;
+  --plate-white: #eef0fa;
+  --card-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-plate-red: var(--plate-red);
+  --color-plate-blue: var(--plate-blue);
+  --color-plate-yellow: var(--plate-yellow);
+  --color-plate-green: var(--plate-green);
+  --color-plate-white: var(--plate-white);
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 1rem;
+  --shadow-card: var(--card-shadow);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    color-scheme: light dark;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  html.light {
+    color-scheme: light;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+@layer components {
+  /* Poster-style headings in the condensed industrial display face. */
+  .display-xl {
+    font-family: var(--font-display);
+    font-size: 3.4rem;
+    line-height: 0.92;
+    font-weight: 800;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+  }
+  .display-lg {
+    font-family: var(--font-display);
+    font-size: 2.35rem;
+    line-height: 0.95;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+  .display-md {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    line-height: 1;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  /* Engraving-style hatching, used on hero panels. */
+  .hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--foreground) 10%, transparent) 0 1px,
+      transparent 1px 7px
+    );
+  }
+
+  /* Exercise photos printed in one ink colour, like the line-art references. */
+  .ink-photo {
+    isolation: isolate;
+    background: var(--ink);
+  }
+  .ink-photo img {
+    filter: grayscale(1) contrast(1.12);
+    mix-blend-mode: screen;
+  }
+}
+
+/* CSS-only animations (Tailwind's ping/pulse) respect reduced motion too. Spinners stay: they signal loading. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ping,
+  .animate-pulse {
+    animation: none;
+  }
+}

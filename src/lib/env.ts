@@ -1,0 +1,48 @@
+import { z } from "zod";
+
+/**
+ * Server-side environment, validated once at first import.
+ * Never import this file from a client component: it contains secrets.
+ */
+const booleanString = z
+  .enum(["true", "false"])
+  .default("true")
+  .transform((v) => v === "true");
+
+const schema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+  BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
+  ALLOW_SIGNUP: booleanString,
+  DEFAULT_TIMEZONE: z.string().min(1).default("UTC"),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default("claude-sonnet-5-5"),
+  STORAGE_DRIVER: z.enum(["local", "vercel-blob"]).default("local"),
+  LOCAL_STORAGE_DIR: z.string().default("./.data/uploads"),
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  // Set by Vercel.
+  VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
+  VERCEL_URL: z.string().optional(),
+});
+
+export type Env = z.infer<typeof schema>;
+
+function parseEnv(): Env {
+  const result = schema.safeParse(process.env);
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
+      .join("\n");
+    throw new Error(`Invalid environment configuration:\n${details}\nSee .env.example.`);
+  }
+  return result.data;
+}
+
+export const env: Env = parseEnv();
+
+/**
+ * Public base URL of this deployment. Production and local use BETTER_AUTH_URL; every Vercel preview has its
+ * own address, so sign-in works there too.
+ */
+export const appUrl: string = env.VERCEL_ENV === "preview" && env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.BETTER_AUTH_URL;
