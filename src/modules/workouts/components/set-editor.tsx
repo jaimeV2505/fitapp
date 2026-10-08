@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Weight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { spring, useHaptics } from "@/lib/motion";
 import { prefillDraft, weightStepFor, type SetDraft } from "../domain/prefill";
 import type { ExerciseSessionView, SetView } from "../types";
 import { NumberStepper } from "./number-stepper";
+import { PlateCalculatorSheet } from "./plate-calculator-sheet";
 
 const RIR_OPTIONS = [0, 1, 2, 3, 4] as const;
 
@@ -33,6 +34,7 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
   const [draft, setDraft] = useState<SetDraft>(() => prefillDraft(exercise, set));
   const haptic = useHaptics();
   const t = useT();
+  const [platesOpen, setPlatesOpen] = useState(false);
   const editing = set.completed;
   const isLastTargetSet = set.setNumber === exercise.targetSets;
   const canSave = draft.reps !== null && draft.reps > 0;
@@ -55,6 +57,16 @@ export function SetEditor({ exercise, set, onSave, onUndo, onCancel, suggestion 
         max={1000}
         onChange={(weightKg) => setDraft((d) => ({ ...d, weightKg }))}
       />
+      <button
+        type="button"
+        onClick={() => setPlatesOpen(true)}
+        className="-mt-2 flex items-center gap-2 self-start rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+      >
+        <Weight className="size-4" /> {t("plates.open")}
+      </button>
+      {platesOpen ? (
+        <PlateCalculatorSheet initialKg={draft.weightKg} onClose={() => setPlatesOpen(false)} onApply={(weightKg) => setDraft((d) => ({ ...d, weightKg }))} />
+      ) : null}
       {suggestion && !editing && draft.weightKg !== suggestion.toKg ? (
         <button
           type="button"

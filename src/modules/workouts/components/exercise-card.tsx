@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { AnimatedCheck } from "@/components/ui/animated-check";
 import { Card } from "@/components/ui/card";
 import { collapse, duration, ease, popIn, slideSwap, spring } from "@/lib/motion";
+import { InkStamp } from "@/components/ui/ink-stamp";
+import { Sparkline } from "@/components/ui/sparkline";
 import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
@@ -94,6 +96,7 @@ export function ExerciseCard({
           />
         ) : null}
       </AnimatePresence>
+      {complete ? <InkStamp sets={doneCount} animate={celebrating} className="absolute right-12 top-2 z-20" /> : null}
       <div className="flex items-center">
         <button
           type="button"
@@ -113,6 +116,7 @@ export function ExerciseCard({
               {formatTarget(exercise.targetSets, exercise.repMin, exercise.repMax)}
               {previous ? t("card.last", { summary: `${previous.weightLabel ? `${previous.weightLabel} ` : ""}${previous.repsLabel}` }) : ""}
             </p>
+            <Sparkline values={exercise.trend} className="mt-1 h-5 w-14" />
             {progression?.kind === "increase" && !complete ? (
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-semibold text-success">
                 <ArrowUp className="size-3" strokeWidth={3} /> {t("card.readyFor", { kg: progression.toKg })}

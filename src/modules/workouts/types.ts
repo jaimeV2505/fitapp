@@ -47,6 +47,8 @@ export interface ExerciseSessionView {
   restSeconds: number;
   sets: SetView[];
   previous: PreviousPerformance | null;
+  /** Heaviest weight of each of the last finished sessions with this exercise, oldest first (for the sparkline). */
+  trend: number[];
 }
 
 export interface SessionView {

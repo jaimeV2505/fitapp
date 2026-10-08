@@ -8,6 +8,7 @@ import { INTL_LOCALE } from "@/lib/i18n/config";
 import { titleOf } from "@/lib/i18n/metadata";
 import { getI18n } from "@/lib/i18n/server";
 import { formatShortDate } from "@/lib/time";
+import { MuscleHeatMap } from "@/modules/analytics/components/muscle-heat-map";
 import { MuscleSetsBars } from "@/modules/analytics/components/muscle-sets";
 import { getProgressOverview } from "@/modules/analytics/service";
 import { requireAppUser } from "@/modules/users/app-user";
@@ -66,6 +67,14 @@ export default async function ProgressPage() {
             ))}
           </div>
         </section>
+      </StaggerItem>
+
+      <StaggerItem>
+        <Card className="p-5">
+          <h2 className="mb-1 text-lg font-semibold">{t("heat.title")}</h2>
+          <p className="mb-4 text-sm text-muted-foreground">{t("heat.hint")}</p>
+          <MuscleHeatMap rows={overview.muscleSets} />
+        </Card>
       </StaggerItem>
 
       <StaggerItem>

@@ -32,6 +32,7 @@ const makeExercise = (overrides: Partial<ExerciseSessionView> = {}): ExerciseSes
   allowFailureOnLastSet: false,
   restSeconds: 120,
   sets: [makeSet(1), makeSet(2), makeSet(3)],
+  trend: [],
   previous: {
     localDate: "2026-10-05",
     sets: [

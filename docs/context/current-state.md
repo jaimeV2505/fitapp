@@ -61,6 +61,11 @@ Last updated: 2026-10-08 (session 6)
 - **Spanish** (`docs/i18n.md`): own i18n module (typed dictionaries, ICU plurals, cookie, switcher on Profile and sign-in), ~430 messages, localized dates/numbers, server errors translated, Spanish names for the routine/foods/templates. Exercise instructions and the extended library names stay English.
 - Progression reasons are now structured (key + params) instead of English sentences.
 
+## Session 9: visual redesign (written; run typecheck/lint/test, then look at it on a phone)
+
+See `docs/visual-system.md`: depth/grain/slab surfaces, ink stamp, sparklines, plate calculator + warm-ups, week-as-plates, muscle heat map, gold PR plate, shareable workout image, food scan effect, optional plate sound, day colour bar. Pure logic is unit-tested (plates, warm-ups, heat levels, week wheel, trends, sparkline math); the screens and the new SQL (`getExerciseTrendRows`, `listCompletedDates`) have not been run.
+- Not done: shared-element transition (see backlog).
+
 ## Verified
 
 - Pure code compiled with TypeScript strict + `noUncheckedIndexedAccess` and unit tests run (116 tests: blueprint, metrics, formatting, prefill, logger state, persistent queue, sync engine, time helpers, exercise history, week filling).

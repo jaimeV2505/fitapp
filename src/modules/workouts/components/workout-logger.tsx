@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { fireCelebration } from "@/lib/celebrate";
 import { useLocalizedName, useT } from "@/lib/i18n/client";
+import { cn } from "@/lib/utils";
+import { playClack } from "@/lib/sound";
+import { isoWeekdayOfLocalDate } from "@/lib/time";
 import type { Translate } from "@/lib/i18n/translator";
 import { duration, ease, fadeUp, listItem, spring, staggerContainer, useHaptics } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
@@ -115,6 +118,7 @@ export function WorkoutLogger({ initialSession, restTimerEnabled }: WorkoutLogge
 
       if (!completed) return;
       haptic(12);
+      if (!set.completed) playClack();
       setCompletedSetId(set.id);
       later(() => setCompletedSetId(null), 900);
 
@@ -214,7 +218,9 @@ export function WorkoutLogger({ initialSession, restTimerEnabled }: WorkoutLogge
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="sticky top-0 z-20 -mx-4 bg-background/85 px-4 pb-3 pt-2 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 -mx-4 bg-background/85 px-4 pb-3 pt-3 backdrop-blur-xl">
+        {/* The colour of today's plate, as a bar: each training day has its own identity. */}
+        <span aria-hidden className={cn("absolute inset-x-4 top-0 h-1 rounded-b-full", DAY_BAR[isoWeekdayOfLocalDate(session.localDate)] ?? "bg-primary")} />
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-muted-foreground">{t("common.today")}</p>
@@ -321,6 +327,16 @@ export function WorkoutLogger({ initialSession, restTimerEnabled }: WorkoutLogge
     </div>
   );
 }
+
+const DAY_BAR: Record<number, string> = {
+  1: "bg-plate-red",
+  2: "bg-plate-blue",
+  3: "bg-plate-yellow",
+  4: "bg-plate-green",
+  5: "bg-plate-white",
+  6: "bg-[#97a0b8]",
+  7: "bg-[#97a0b8]",
+};
 
 function SyncStatus({ status, pending, error, t }: { status: "synced" | "saving" | "offline" | "error"; pending: number; error: string | null; t: Translate }) {
   const content =

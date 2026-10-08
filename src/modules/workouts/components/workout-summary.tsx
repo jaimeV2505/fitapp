@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { listItem, staggerContainer } from "@/lib/motion";
-import { Trophy } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -10,12 +9,14 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CountUp } from "@/components/ui/animated-number";
+import { GoldPlate } from "@/components/ui/gold-plate";
 import { ExerciseThumb } from "@/modules/exercises/components/exercise-thumb";
 import { useIntlLocale, useLocalizedName, useT } from "@/lib/i18n/client";
 import { formatShortDate } from "@/lib/time";
 import { formatDuration, formatWeight } from "../domain/format";
 import { computeSessionProgress, countsAsWorkingSet } from "../domain/metrics";
 import type { RecordSummary, SessionView } from "../types";
+import { ShareButton } from "./share-button";
 
 const STAT_VARIANTS = staggerContainer(0.06);
 
@@ -91,7 +92,7 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
       {records.length > 0 ? (
         <section aria-labelledby="records-heading" className="flex flex-col gap-2 rounded-2xl border border-primary/40 bg-card p-4">
           <h2 id="records-heading" className="flex items-center gap-2 text-lg font-semibold">
-            <Trophy className="size-5 text-primary" /> {t("summary.newRecords")}
+            <GoldPlate size={28} /> {t("summary.newRecords")}
           </h2>
           <ul className="flex flex-col gap-1">
             {records.map((record) => (
@@ -138,6 +139,24 @@ export function WorkoutSummary({ session, celebrate, records }: WorkoutSummaryPr
           );
         })}
       </section>
+
+      {!discarded && progress.setsCompleted > 0 ? (
+        <ShareButton
+          fileName={`fitapp-${session.localDate}`}
+          data={{
+            title: name(session.focus),
+            subtitle: formatShortDate(session.localDate, intl),
+            stats: [
+              { label: t("summary.duration"), value: formatDuration(durationSeconds) },
+              { label: t("summary.sets"), value: String(progress.setsCompleted) },
+              { label: t("summary.volume"), value: `${Math.round(progress.totalVolumeKg).toLocaleString(intl)} kg` },
+            ],
+            recordsHeading: t("share.records"),
+            records: records.slice(0, 3).map((record) => `${name(record.exerciseName)} · ${record.kind === "weight" ? `${record.valueKg} kg` : `1RM ${record.valueKg} kg`}`),
+            footer: t("share.footer"),
+          }}
+        />
+      ) : null}
 
       <Button asChild variant="secondary" size="lg">
         <Link href="/progress">{t("summary.backToHistory")}</Link>

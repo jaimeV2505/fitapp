@@ -1,11 +1,13 @@
 "use client";
 
 import { Camera, LoaderCircle, RotateCcw, X } from "lucide-react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { NumberField } from "@/components/ui/number-field";
+import { ScanOverlay } from "@/components/ui/scan-overlay";
 import { Sheet } from "@/components/ui/sheet";
 import { MEAL_TYPES, type ConfidenceLevel, type MealType } from "@/lib/db/schema/enums";
 import { resizeImage } from "@/lib/image";
@@ -35,6 +37,8 @@ function defaultMealType(): MealType {
   if (hour < 18) return "snack";
   return "dinner";
 }
+
+const CONFIDENCE_BAR: Record<ConfidenceLevel, string> = { high: "bg-success", medium: "bg-plate-yellow", low: "bg-destructive" };
 
 function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
   const t = useT();
@@ -159,7 +163,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
         }}
       />
       <Button size="lg" variant="secondary" className="w-full" onClick={() => inputRef.current?.click()}>
-        <Camera className="size-6" /> Food photo
+        <Camera className="size-6" /> {t("photo.title")}
       </Button>
 
       <Sheet
@@ -203,8 +207,11 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
       >
         {step !== "review" && previewUrl ? (
           <div className="flex flex-col gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL, not optimizable */}
-            <img src={previewUrl} alt={t("photo.alt")} className="aspect-[4/3] w-full rounded-2xl object-cover" />
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local object URL, not optimizable */}
+              <img src={previewUrl} alt={t("photo.alt")} className="aspect-[4/3] w-full rounded-2xl object-cover" />
+              <ScanOverlay active={step === "analyzing"} />
+            </div>
             {step === "analyzing" ? (
               <div role="status" className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
                 <LoaderCircle className="size-5 animate-spin" /> {t("photo.estimating")}
@@ -256,8 +263,14 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
             </div>
 
             <ul className="flex flex-col gap-3">
-              {rows.map((row) => (
-                <li key={row.key} className="rounded-2xl border border-border bg-card p-3">
+              {rows.map((row, index) => (
+                <motion.li
+                  key={row.key}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 32, delay: Math.min(index, 6) * 0.11 }}
+                  className="rounded-2xl border border-border bg-card p-3"
+                >
                   <div className="flex items-center gap-2">
                     <input
                       value={row.name}
@@ -275,8 +288,16 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                       <X className="size-4" />
                     </button>
                   </div>
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex items-center gap-3">
                     <ConfidenceBadge level={levelFromScore(row.confidence)} />
+                    <div aria-hidden className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <motion.div
+                        className={cn("h-full rounded-full", CONFIDENCE_BAR[levelFromScore(row.confidence)])}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.round(Math.min(Math.max(row.confidence, 0), 1) * 100)}%` }}
+                        transition={{ duration: 0.7, delay: 0.2 + Math.min(index, 6) * 0.11, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    </div>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <NumberField label={t("photo.weight")} suffix="g" value={row.grams} onChange={(v) => setRows((cur) => cur.map((r) => (r.key === row.key ? scaledRow(r, v ?? 0) : r)))} />
@@ -287,7 +308,7 @@ export function FoodPhotoButton({ date, controlRef }: { date: string; controlRef
                     <NumberField label={t("nutrition.carbs")} suffix="g" value={row.carbs} onChange={(v) => update(row.key, { carbs: v ?? 0 })} />
                     <NumberField label={t("nutrition.fat")} suffix="g" value={row.fat} onChange={(v) => update(row.key, { fat: v ?? 0 })} />
                   </div>
-                </li>
+                </motion.li>
               ))}
             </ul>
             {rows.length === 0 ? <p className="text-center text-sm text-muted-foreground">{t("photo.noneLeft")}</p> : null}

@@ -9,6 +9,8 @@
 6. Onboarding and billing (only when opening to others)
 
 ## Phase 1
+- [ ] Shared-element transition: exercise detail as a full page route so the thumbnail can grow into the photo
+- [ ] Lote 1 leftovers: streaks and consistency calendar, repeat yesterday's meal / favourites
 - [ ] Verify region match (Neon vs. Vercel functions) and measure again
 - [ ] Store the language in the user's settings (cross-device) instead of only a cookie
 - [ ] Translate exercise instructions / library names (or add an AI translation cache)

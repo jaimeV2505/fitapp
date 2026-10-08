@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema";
 import type { MuscleGroup } from "@/lib/db/schema/enums";
 import type { ExerciseBests } from "./domain/records";
+import { buildTrends, type TrendRow } from "./domain/trend";
 import type { ExerciseBlueprint, PlanItemInput } from "./domain/blueprint";
 import type {
   DayPreviewItem,
@@ -301,27 +302,20 @@ export async function getSessionView(userId: string, sessionId: string): Promise
     setsByExerciseSession.set(row.exerciseSessionId, list);
   }
 
-  const previousByExercise =
-    session.status === "in_progress"
-      ? await getPreviousPerformance(
-          userId,
-          exerciseRows.flatMap((row) => (row.exerciseId ? [row.exerciseId] : [])),
-          session.workoutDayId,
-        )
-      : new Map<string, PreviousPerformance>();
-
   const liveExerciseIds = exerciseRows.flatMap((row) => (row.exerciseId ? [row.exerciseId] : []));
-  const imageRows =
-    liveExerciseIds.length === 0
-      ? []
-      : await db
-          .select({ id: exercises.id, imageUrls: exercises.imageUrls })
-          .from(exercises)
-          .where(inArray(exercises.id, liveExerciseIds));
-  const imagesByExercise = new Map(imageRows.map((row) => [row.id, row.imageUrls ?? []]));
+  const inProgress = session.status === "in_progress";
 
-  const bestsByExercise =
-    session.status === "in_progress" ? await getExerciseBests(userId, liveExerciseIds) : new Map<string, ExerciseBests>();
+  // Independent lookups run together instead of one after another.
+  const [previousByExercise, imageRows, bestsByExercise, trendRows] = await Promise.all([
+    inProgress ? getPreviousPerformance(userId, liveExerciseIds, session.workoutDayId) : Promise.resolve(new Map<string, PreviousPerformance>()),
+    liveExerciseIds.length === 0
+      ? Promise.resolve([] as { id: string; imageUrls: string[] | null }[])
+      : db.select({ id: exercises.id, imageUrls: exercises.imageUrls }).from(exercises).where(inArray(exercises.id, liveExerciseIds)),
+    inProgress ? getExerciseBests(userId, liveExerciseIds) : Promise.resolve(new Map<string, ExerciseBests>()),
+    inProgress ? getExerciseTrendRows(userId, liveExerciseIds) : Promise.resolve([] as TrendRow[]),
+  ]);
+  const imagesByExercise = new Map(imageRows.map((row) => [row.id, row.imageUrls ?? []]));
+  const trendsByExercise = buildTrends(trendRows);
 
   const exercisesView: ExerciseSessionView[] = exerciseRows.map((row) => ({
     id: row.id,
@@ -342,6 +336,7 @@ export async function getSessionView(userId: string, sessionId: string): Promise
     restSeconds: row.restSeconds,
     sets: setsByExerciseSession.get(row.id) ?? [],
     previous: row.exerciseId ? (previousByExercise.get(row.exerciseId) ?? null) : null,
+    trend: row.exerciseId ? (trendsByExercise.get(row.exerciseId) ?? []) : [],
   }));
 
   return {
@@ -623,6 +618,63 @@ export async function getExerciseBests(
     result.set(row.exerciseId, { maxWeightKg: toNumber(row.maxWeight), bestE1RmKg: toNumber(row.bestE1Rm) });
   }
   return result;
+}
+
+const TREND_SESSIONS = 8;
+
+/**
+ * Heaviest completed working weight of each exercise in each of its last finished sessions (up to 8 per exercise,
+ * ranked in SQL so a much-trained lift cannot crowd out the others).
+ */
+export async function getExerciseTrendRows(userId: string, exerciseIds: readonly string[]): Promise<TrendRow[]> {
+  if (exerciseIds.length === 0) return [];
+
+  const ranked = db
+    .select({
+      exerciseId: exerciseSessions.exerciseId,
+      sessionId: workoutSessions.id,
+      startedAt: workoutSessions.startedAt,
+      topWeight: sql<string | null>`max(${workoutSets.weightKg})`.as("top_weight"),
+      rank: sql<number>`(row_number() over (partition by ${exerciseSessions.exerciseId} order by ${workoutSessions.startedAt} desc))::int`.as("rank"),
+    })
+    .from(workoutSets)
+    .innerJoin(exerciseSessions, eq(exerciseSessions.id, workoutSets.exerciseSessionId))
+    .innerJoin(workoutSessions, eq(workoutSessions.id, exerciseSessions.sessionId))
+    .where(
+      and(
+        eq(workoutSessions.userId, userId),
+        ne(workoutSessions.status, "in_progress"),
+        inArray(exerciseSessions.exerciseId, [...exerciseIds]),
+        eq(workoutSets.completed, true),
+        eq(workoutSets.isWarmup, false),
+        sql`${workoutSets.weightKg} > 0`,
+      ),
+    )
+    .groupBy(exerciseSessions.exerciseId, workoutSessions.id, workoutSessions.startedAt)
+    .as("ranked");
+
+  const rows = await db.select().from(ranked).where(lte(ranked.rank, TREND_SESSIONS));
+  return rows.flatMap((row) =>
+    row.exerciseId
+      ? [{ exerciseId: row.exerciseId, sessionId: row.sessionId, startedAt: row.startedAt.toISOString(), topWeightKg: toNumber(row.topWeight) }]
+      : [],
+  );
+}
+
+/** Distinct local dates (YYYY-MM-DD) with at least one completed workout in the range. */
+export async function listCompletedDates(userId: string, startDate: string, endDate: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ localDate: workoutSessions.localDate })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, userId),
+        eq(workoutSessions.status, "completed"),
+        gte(workoutSessions.localDate, startDate),
+        lte(workoutSessions.localDate, endDate),
+      ),
+    );
+  return rows.map((row) => row.localDate);
 }
 
 export interface PlanItemWrite {

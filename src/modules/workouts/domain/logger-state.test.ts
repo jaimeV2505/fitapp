@@ -29,6 +29,7 @@ const session = (): SessionView => ({
       allowFailureOnLastSet: false,
       restSeconds: 120,
       previous: null,
+      trend: [],
       sets: [
         { id: "a", setNumber: 1, isWarmup: false, weightKg: null, reps: null, rir: null, completed: false, completedAt: null },
         { id: "b", setNumber: 2, isWarmup: false, weightKg: null, reps: null, rir: null, completed: false, completedAt: null },
