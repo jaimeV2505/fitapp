@@ -95,6 +95,10 @@ pnpm check:migrations                 # or run the check by hand
 
 If it happens: `git checkout $(git log --diff-filter=A --format=%h -n 1 -- drizzle/meta/_journal.json) -- drizzle`, commit and push. Never regenerate a new migration to "fix" it: it would not match the one recorded in the database.
 
+## Files that live only in git
+
+Two things are never in the zips that accompany a session: `drizzle/` (migrations) and `src/data/starter/exercise-library.json` (the exercise library). If either goes missing from your folder, restore it from the last commit (`git checkout -- <path>`), never from a zip. `pnpm check:migrations` and `pnpm check:data` verify both, and the pre-push hook runs them.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |

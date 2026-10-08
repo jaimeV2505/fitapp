@@ -1,8 +1,8 @@
 #!/bin/sh
-# Blocks a push whose latest commit lost the database migrations. Enable once with:
+# Blocks a push whose working copy lost the database migrations or the exercise library. Enable once with:
 #   git config core.hooksPath .githooks
-if ! sh scripts/check-migrations.sh; then
+if ! sh scripts/check-migrations.sh || ! sh scripts/check-data-files.sh; then
   echo ""
-  echo "Push blocked: fix the migrations first (see above), then push again."
+  echo "Push blocked: fix the problem above first, then push again."
   exit 1
 fi

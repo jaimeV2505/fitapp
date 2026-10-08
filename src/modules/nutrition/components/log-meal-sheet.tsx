@@ -14,6 +14,7 @@ import { gramsFor, macrosFor, resolveTemplateItems, sumMacros, type Macros } fro
 import { logMealAction } from "../actions";
 import { useLocalizedName, useT } from "@/lib/i18n/client";
 import { mealLabel, unitLabel } from "@/lib/i18n/labels";
+import type { RecentMeal } from "../domain/recent-meals";
 import type { TemplateView } from "../types";
 
 interface DraftItem {
@@ -57,6 +58,8 @@ function templateCalories(template: TemplateView, foodsById: ReadonlyMap<string,
 
 interface LogMealSheetProps {
   templates: TemplateView[];
+  /** Meals eaten in the last weeks, offered as "repeat this". */
+  recent: RecentMeal[];
   foods: FoodView[];
   /** The day being viewed, YYYY-MM-DD. */
   date: string;
@@ -65,7 +68,7 @@ interface LogMealSheetProps {
   onTakePhoto?: () => void;
 }
 
-export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: LogMealSheetProps) {
+export function LogMealSheet({ templates, recent, foods, date, isToday, onTakePhoto }: LogMealSheetProps) {
   const router = useRouter();
   const t = useT();
   const localName = useLocalizedName();
@@ -118,6 +121,17 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
         optionGroup: item.optionGroup,
         isDefaultOption: item.isDefaultOption,
       })),
+    });
+    setStep("edit");
+  }
+
+  function startFromRecent(meal: RecentMeal) {
+    setDraft({
+      mealType: meal.mealType,
+      templateId: null,
+      name: meal.name ?? "",
+      choices: {},
+      items: meal.items.map((item) => ({ id: `recent-${crypto.randomUUID()}`, foodId: item.foodId, quantity: item.quantity, unit: item.unit, optionGroup: null, isDefaultOption: true })),
     });
     setStep("edit");
   }
@@ -219,6 +233,38 @@ export function LogMealSheet({ templates, foods, date, isToday, onTakePhoto }: L
                   <span className="block text-sm opacity-80">{t("logMeal.takePhotoHint")}</span>
                 </span>
               </button>
+            ) : null}
+            {recent.length > 0 ? (
+              <section aria-labelledby="recent-heading" className="flex flex-col gap-2">
+                <p id="recent-heading" className="mb-1 mt-2 text-sm text-muted-foreground">
+                  {t("logMeal.recent")}
+                </p>
+                {recent.map((meal) => {
+                  const kcal = sumMacros(
+                    meal.items.flatMap((item) => {
+                      const macros = itemMacros({ id: item.foodId, foodId: item.foodId, quantity: item.quantity, unit: item.unit, optionGroup: null, isDefaultOption: true }, foodsById.get(item.foodId));
+                      return macros ? [macros] : [];
+                    }),
+                  ).calories;
+                  return (
+                    <button
+                      key={meal.sourceId}
+                      type="button"
+                      onClick={() => startFromRecent(meal)}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-transform active:scale-[0.99]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block font-semibold">{localName(meal.name ?? mealLabel(t, meal.mealType))}</span>
+                        <span className="block truncate text-sm text-muted-foreground">
+                          {meal.items.map((item) => localName(foodsById.get(item.foodId)?.name ?? t("logMeal.unknown"))).join(", ")}
+                        </span>
+                        {meal.times > 1 ? <span className="block text-xs font-medium text-muted-foreground">{t("logMeal.recentTimes", { count: meal.times })}</span> : null}
+                      </span>
+                      <span className="tnum shrink-0 font-semibold">{Math.round(kcal)} kcal</span>
+                    </button>
+                  );
+                })}
+              </section>
             ) : null}
             <p className="mb-1 mt-2 text-sm text-muted-foreground">{t("logMeal.orTemplate")}</p>
             {templates.map((template) => {

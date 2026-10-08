@@ -77,11 +77,16 @@ export async function deleteMealRow(userId: string, mealId: string): Promise<boo
 }
 
 export async function listMealsForDate(userId: string, localDate: string, timeZone: string): Promise<MealView[]> {
+  return listMealsBetween(userId, localDate, localDate, timeZone);
+}
+
+/** Meals logged from `fromDate` to `toDate` (both inclusive, local dates), oldest first. */
+export async function listMealsBetween(userId: string, fromDate: string, toDate: string, timeZone: string): Promise<MealView[]> {
   const timeFormat = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hour12: false });
   const mealRows = await db
     .select()
     .from(meals)
-    .where(and(eq(meals.userId, userId), eq(meals.localDate, localDate)))
+    .where(and(eq(meals.userId, userId), gte(meals.localDate, fromDate), lte(meals.localDate, toDate)))
     .orderBy(asc(meals.eatenAt));
   if (mealRows.length === 0) return [];
 

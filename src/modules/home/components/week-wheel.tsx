@@ -10,19 +10,11 @@ import type { MessageKey } from "@/lib/i18n/types";
 import { spring } from "@/lib/motion";
 import { isoWeekdayLabel } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import type { Streak } from "../domain/consistency";
 import type { WheelDayState } from "../domain/week-wheel";
 import type { WeekWheelData } from "../service";
-
-/** Each weekday is a plate: Olympic colours Monday to Friday, steel "change plates" for the weekend. */
-const DISC: Record<number, string> = {
-  1: "bg-plate-red text-white",
-  2: "bg-plate-blue text-white",
-  3: "bg-plate-yellow text-[#101640]",
-  4: "bg-plate-green text-white",
-  5: "bg-plate-white text-[#101640]",
-  6: "bg-[#97a0b8] text-[#101640]",
-  7: "bg-[#97a0b8] text-[#101640]",
-};
+import { WEEKDAY_DISC } from "./plate-colors";
+import { StreakBadge } from "./streak-badge";
 
 const STATE_LABEL: Record<WheelDayState, MessageKey> = {
   done: "wheel.done",
@@ -32,7 +24,7 @@ const STATE_LABEL: Record<WheelDayState, MessageKey> = {
 };
 
 /** The week as seven plates. Trained days light up in their plate colour; reaching the goal sends a flash across. */
-export function WeekWheel({ wheel }: { wheel: WeekWheelData }) {
+export function WeekWheel({ wheel, streak }: { wheel: WeekWheelData; streak?: Streak }) {
   const t = useT();
   const intl = useIntlLocale();
   const [flashRef, animateFlash] = useAnimate<HTMLDivElement>();
@@ -78,7 +70,7 @@ export function WeekWheel({ wheel }: { wheel: WeekWheelData }) {
                 transition={{ ...spring.pop, delay: index * 0.05 }}
                 className={cn(
                   "relative flex aspect-square w-full max-w-12 items-center justify-center rounded-full border-2",
-                  done && cn(DISC[day.weekday], "border-black/15"),
+                  done && cn(WEEKDAY_DISC[day.weekday], "border-black/15"),
                   day.state === "today" && "border-primary bg-primary/10",
                   day.state === "past" && "border-border bg-muted/50",
                   day.state === "future" && "border-dashed border-border",
@@ -98,6 +90,8 @@ export function WeekWheel({ wheel }: { wheel: WeekWheelData }) {
           );
         })}
       </ol>
+
+      {streak && streak.current > 0 ? <StreakBadge streak={streak} className="mt-4" /> : null}
 
       {wheel.goalReached ? (
         <div

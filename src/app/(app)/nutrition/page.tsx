@@ -10,7 +10,8 @@ import { listFoods } from "@/modules/foods/service";
 import { MacroDashboard } from "@/modules/nutrition/components/macro-dashboard";
 import { MealActions } from "@/modules/nutrition/components/meal-actions";
 import { MealList } from "@/modules/nutrition/components/meal-list";
-import { getDailyNutrition, getTemplates } from "@/modules/nutrition/service";
+import { buildRecentMeals } from "@/modules/nutrition/domain/recent-meals";
+import { getDailyNutrition, getRecentMealSources, getTemplates } from "@/modules/nutrition/service";
 import { requireAppUser } from "@/modules/users/app-user";
 
 export const generateMetadata = titleOf("nutrition.title");
@@ -26,11 +27,13 @@ export default async function NutritionPage({ searchParams }: { searchParams: Pr
   const { date } = await searchParams;
   const parsed = dateParam.safeParse(date);
 
-  const [day, templates, foods] = await Promise.all([
+  const [day, templates, foods, recentSources] = await Promise.all([
     getDailyNutrition(user.id, parsed.success ? parsed.data : undefined),
     getTemplates(user.id),
     listFoods(user.id),
+    getRecentMealSources(user.id),
   ]);
+  const recent = buildRecentMeals(recentSources, new Set(foods.map((food) => food.id)));
 
   const navLink = "flex size-11 items-center justify-center rounded-full border border-border bg-card transition-transform active:scale-95";
 
@@ -64,7 +67,7 @@ export default async function NutritionPage({ searchParams }: { searchParams: Pr
       </StaggerItem>
 
       <StaggerItem>
-        <MealActions templates={templates} foods={foods} date={day.date} isToday={day.isToday} />
+        <MealActions templates={templates} recent={recent} foods={foods} date={day.date} isToday={day.isToday} />
       </StaggerItem>
 
       <StaggerItem>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Suspense, use, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,6 +96,9 @@ export default function Body3DView({ cells }: { cells: readonly HeatCell[] }) {
           <>
             <p className="font-semibold">{muscleLabel(t, cell.muscle)}</p>
             <p className="tnum text-sm text-muted-foreground">{cell.sets > 0 ? t("heat.setsThisWeek", { count: cell.sets }) : t("heat.noSets")}</p>
+            <Link href={`/library?muscle=${cell.muscle}`} className="mt-1 inline-block text-sm font-semibold underline underline-offset-4">
+              {t("heat.seeExercises")}
+            </Link>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">{t("heat.hint3d")}</p>

@@ -9,6 +9,8 @@
 6. Onboarding and billing (only when opening to others)
 
 ## Phase 1
+- [ ] Favourite meals (pin) on top of "repeat a recent meal"
+- [ ] Accounts for other people: email verification + password reset (needs an email provider), Google/Apple sign-in, onboarding that builds a routine, kg/lb, Hevy/Strong CSV import
 - [ ] Get a real anatomy model (Z-Anatomy / BodyParts3D / paid), prepare it, `pnpm model:check`, add `public/models/anatomy.glb` and `MODEL_CREDIT`
 - [ ] 3D: tap a muscle to open the exercises that train it; exercise detail highlights its muscles in 3D
 - [ ] Photos and instructions for the base exercises (an AI-written or licensed set), Spanish instructions

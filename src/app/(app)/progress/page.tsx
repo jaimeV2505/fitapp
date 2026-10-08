@@ -8,6 +8,8 @@ import { INTL_LOCALE } from "@/lib/i18n/config";
 import { titleOf } from "@/lib/i18n/metadata";
 import { getI18n } from "@/lib/i18n/server";
 import { formatShortDate } from "@/lib/time";
+import { ConsistencyCalendar } from "@/modules/home/components/consistency-calendar";
+import { getConsistency } from "@/modules/home/service";
 import { MuscleHeatMap } from "@/modules/analytics/components/muscle-heat-map";
 import { MuscleSetsBars } from "@/modules/analytics/components/muscle-sets";
 import { getProgressOverview } from "@/modules/analytics/service";
@@ -21,10 +23,11 @@ export default async function ProgressPage() {
   const user = await requireAppUser();
   const { t, locale, name } = await getI18n();
   const intl = INTL_LOCALE[locale];
-  const [overview, history, records] = await Promise.all([
+  const [overview, history, records, consistency] = await Promise.all([
     getProgressOverview(user.id),
     listHistory(user.id, 60),
     getRecentRecords(user.id, 6),
+    getConsistency(user.id),
   ]);
   const { thisWeek } = overview;
 
@@ -67,6 +70,10 @@ export default async function ProgressPage() {
             ))}
           </div>
         </section>
+      </StaggerItem>
+
+      <StaggerItem>
+        <ConsistencyCalendar data={consistency} />
       </StaggerItem>
 
       <StaggerItem>

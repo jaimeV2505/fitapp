@@ -3,7 +3,8 @@ import { addDays, localDateString } from "@/lib/time";
 import { findVisibleFood } from "@/modules/foods/repository";
 import { getUserSettings } from "@/modules/settings/repository";
 import { gramsFor, macrosFor, sumMacros } from "./domain/macros";
-import { deleteMealRow, insertMeal, listMealsForDate, listTemplates, updateTargets, type NewMealItem } from "./repository";
+import { deleteMealRow, insertMeal, listMealsBetween, listMealsForDate, listTemplates, updateTargets, type NewMealItem } from "./repository";
+import type { RecentSource } from "./domain/recent-meals";
 import type { DailyNutrition, NutritionTargets, TemplateView } from "./types";
 import type { LogMealInput, TargetsInput } from "./validators";
 
@@ -30,6 +31,20 @@ export async function getDailyNutrition(userId: string, requestedDate?: string, 
 
 export async function getTemplates(userId: string): Promise<TemplateView[]> {
   return listTemplates(userId);
+}
+
+/** Meals of the last few weeks in the shape `buildRecentMeals` needs, for "repeat a recent meal". */
+export async function getRecentMealSources(userId: string, now: Date = new Date(), days = 21): Promise<RecentSource[]> {
+  const settings = await getUserSettings(userId);
+  const today = localDateString(now, settings.timezone);
+  const recent = await listMealsBetween(userId, addDays(today, -days), today, settings.timezone);
+  return recent.map((meal) => ({
+    id: meal.id,
+    mealType: meal.mealType,
+    name: meal.name,
+    eatenAt: meal.eatenAt,
+    items: meal.items.map((item) => ({ foodId: item.foodId, quantity: item.quantity, unit: item.unit })),
+  }));
 }
 
 /**

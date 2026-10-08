@@ -24,6 +24,7 @@ The look comes from the engraved gym illustrations (navy ink, hatching) and the 
 | Shareable image of the workout (1080x1350, drawn with Canvas, no library) | Workout summary | `lib/share-card.ts`, `workouts/components/share-button.tsx` |
 | Food scan: corner brackets and a sweeping line over the photo, then foods appear one by one with a confidence bar | Food photo | `components/ui/scan-overlay.tsx`, `nutrition/components/food-photo-sheet.tsx` |
 | Optional plate "clack" when a set is completed (synthesised, off by default) | Logger, switch on Profile | `lib/sound.ts`, `app/(app)/profile/sound-toggle.tsx` |
+| Consistency calendar: the last 12 weeks, a trained day takes its weekday's plate colour; weekly streak shown as a gold plate with the number of weeks | Progress (calendar), Home (streak under the week) | `home/components/consistency-calendar.tsx`, `streak-badge.tsx`, `home/domain/consistency.ts` |
 | Day colour bar: each training day carries its plate colour | Logger header | `workout-logger.tsx` |
 
 ## The 3D body

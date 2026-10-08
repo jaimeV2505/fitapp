@@ -263,6 +263,8 @@ export const es: Messages = {
     unknown: "Desconocido",
     unknownFood: "Alimento desconocido",
     yourMeal: "Tu comida",
+    recent: "Repetir una comida reciente",
+    recentTimes: "La has comido {count} veces últimamente",
   },
   macros: {
     short: "P {p} · C {c} · G {f}",
@@ -550,6 +552,7 @@ export const es: Messages = {
     error3d: "El 3D no está disponible en este dispositivo. Se muestra el mapa plano.",
     credit: "Modelo 3D: {credit}",
     empty: "Completa un entreno y el mapa se enciende.",
+    seeExercises: "Ver ejercicios",
   },
   wheel: {
     goal: "¡Meta cumplida!",
@@ -569,5 +572,16 @@ export const es: Messages = {
   sound: {
     title: "Sonido de disco",
     hint: "Un «clac» muy suave al completar una serie. Desactivado por defecto.",
+  },
+  consistency: {
+    title: "Constancia",
+    hint: "Cada cuadro es un día con entreno, en las últimas 12 semanas.",
+    total: "{count, plural, one {# día de entreno} other {# días de entreno}} en 12 semanas",
+    aria: "Calendario de las últimas 12 semanas: {count, plural, one {# día} other {# días}} con entreno",
+  },
+  streak: {
+    label: "{count, plural, one {Racha de # semana} other {Racha de # semanas}}",
+    best: "Mejor: {count}",
+    none: "Cumple tu meta semanal para empezar una racha.",
   },
 };

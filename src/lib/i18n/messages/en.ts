@@ -261,6 +261,8 @@ export const en = {
     unknown: "Unknown",
     unknownFood: "Unknown food",
     yourMeal: "Your meal",
+    recent: "Repeat a recent meal",
+    recentTimes: "Eaten {count} times lately",
   },
   macros: {
     short: "P {p} · C {c} · F {f}",
@@ -548,6 +550,7 @@ export const en = {
     error3d: "3D is not available on this device. Showing the flat map.",
     credit: "3D model: {credit}",
     empty: "Complete a workout and the map lights up.",
+    seeExercises: "See exercises",
   },
   wheel: {
     goal: "Goal reached!",
@@ -567,5 +570,16 @@ export const en = {
   sound: {
     title: "Plate sound",
     hint: "A very soft clack when you complete a set. Off by default.",
+  },
+  consistency: {
+    title: "Consistency",
+    hint: "Each square is a day with a workout, over the last 12 weeks.",
+    total: "{count, plural, one {# workout day} other {# workout days}} in 12 weeks",
+    aria: "Calendar of the last 12 weeks: {count, plural, one {# day} other {# days}} with a workout",
+  },
+  streak: {
+    label: "{count, plural, one {# week streak} other {# weeks streak}}",
+    best: "Best: {count}",
+    none: "Reach your weekly goal to start a streak.",
   },
 };
