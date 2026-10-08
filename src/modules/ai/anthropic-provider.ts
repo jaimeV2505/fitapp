@@ -16,32 +16,33 @@ export class AnthropicProvider implements AIProvider {
 
   async analyzeFoodImage(input: FoodImageInput): Promise<unknown> {
     const hint = input.hint?.trim();
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 1500,
-      system: FOOD_SYSTEM_PROMPT,
-      tools: [FOOD_TOOL],
-      // Force structured output through the tool, so there is no free text to parse.
-      tool_choice: { type: "tool", name: FOOD_TOOL.name },
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: input.mimeType, data: Buffer.from(input.image).toString("base64") },
-            },
-            {
-              type: "text",
-              text: hint ? `Estimate this meal. The user says: "${hint.slice(0, 200)}"` : "Estimate this meal.",
-            },
-          ],
-        },
-      ],
-    });
+    const image = Buffer.from(input.image).toString("base64");
 
-    const block = response.content.find((part) => part.type === "tool_use");
-    if (!block || block.type !== "tool_use") throw new Error("The model did not return a structured estimate.");
-    return block.input;
+    // Structured output comes through the report_meal tool. The request does NOT force the tool (tool_choice
+    // "tool" or "any"): some models reject it with a 400. The prompt asks for the tool and, if the model answers
+    // in plain text anyway, one more attempt reminds it.
+    for (const attempt of [1, 2]) {
+      const instruction = attempt === 1 ? "Estimate this meal." : `Estimate this meal. Respond only by calling the ${FOOD_TOOL.name} tool.`;
+      const response = await this.client.messages.create({
+        model: this.model,
+        max_tokens: 3000,
+        system: FOOD_SYSTEM_PROMPT,
+        tools: [FOOD_TOOL],
+        tool_choice: { type: "auto" },
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "image", source: { type: "base64", media_type: input.mimeType, data: image } },
+              { type: "text", text: hint ? `${instruction} The user says: "${hint.slice(0, 200)}"` : instruction },
+            ],
+          },
+        ],
+      });
+
+      const block = response.content.find((part) => part.type === "tool_use");
+      if (block && block.type === "tool_use") return block.input;
+    }
+    throw new Error("The model did not return a structured estimate.");
   }
 }

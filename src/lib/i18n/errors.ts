@@ -37,6 +37,10 @@ export const ERROR_KEYS: Readonly<Record<string, MessageKey>> = {
   "Some values are invalid.": "errors.invalid",
   "You are signed out. Sign in again.": "errors.signedOut",
   "Something went wrong. Try again.": "errors.internal",
+  "The AI service rejected the API key. Check ANTHROPIC_API_KEY in the project settings.": "errors.aiKeyRejected",
+  "The AI model was not found. Check ANTHROPIC_MODEL, or remove it to use the default.": "errors.aiModelMissing",
+  "The AI account has no credit left. Add credit in the Anthropic console.": "errors.aiNoCredit",
+  "The AI service is busy. Try again in a moment.": "errors.aiBusy",
   "Photo storage is not set up. Connect Vercel Blob to the project and redeploy.": "errors.storageNotConfigured",
 };
 

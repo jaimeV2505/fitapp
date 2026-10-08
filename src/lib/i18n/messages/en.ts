@@ -148,6 +148,10 @@ export const en = {
     tooMany: "Too many requests. Try again in a moment.",
     workoutFinished: "This workout is already finished or no longer exists.",
     storageNotConfigured: "Photo storage is not set up. Connect Vercel Blob to the project and redeploy.",
+    aiKeyRejected: "The AI service rejected the API key. Check ANTHROPIC_API_KEY in the project settings.",
+    aiModelMissing: "The AI model was not found. Check ANTHROPIC_MODEL, or remove it to use the default.",
+    aiNoCredit: "The AI account has no credit left. Add credit in the Anthropic console.",
+    aiBusy: "The AI service is busy. Try again in a moment.",
   },
   exercise: {
     alsoWorks: " · also {muscles}",

@@ -150,6 +150,10 @@ export const es: Messages = {
     tooMany: "Demasiadas solicitudes. Inténtalo en un momento.",
     workoutFinished: "Este entreno ya terminó o ya no existe.",
     storageNotConfigured: "El almacenamiento de fotos no está configurado. Conecta Vercel Blob al proyecto y vuelve a desplegar.",
+    aiKeyRejected: "El servicio de IA rechazó la clave de API. Revisa ANTHROPIC_API_KEY en los ajustes del proyecto.",
+    aiModelMissing: "No se encontró el modelo de IA. Revisa ANTHROPIC_MODEL, o quítala para usar el modelo por defecto.",
+    aiNoCredit: "La cuenta de IA no tiene crédito. Añade crédito en la consola de Anthropic.",
+    aiBusy: "El servicio de IA está ocupado. Inténtalo en un momento.",
   },
   exercise: {
     alsoWorks: " · también {muscles}",

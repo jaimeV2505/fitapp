@@ -34,7 +34,8 @@
     "db:migrate:ci": "tsx scripts/db-migrate.ts",
     "check:migrations": "sh scripts/check-migrations.sh",
     "model:check": "tsx scripts/check-anatomy-model.ts",
-    "check:data": "sh scripts/check-data-files.sh"
+    "check:data": "sh scripts/check-data-files.sh",
+    "ai:check": "tsx scripts/check-ai.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",

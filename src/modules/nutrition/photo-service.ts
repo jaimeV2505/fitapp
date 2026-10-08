@@ -4,6 +4,7 @@ import { addDays, localDateString } from "@/lib/time";
 import { getStorage, isStorageConfigured } from "@/lib/storage";
 import { aiModelName, getAIProvider } from "@/modules/ai";
 import { EXTENSION, MAX_IMAGE_BYTES, sniffImageType } from "@/modules/ai/domain/image";
+import { classifyAiError, statusOf } from "@/modules/ai/domain/errors";
 import { normalizeEstimate, type FoodEstimate } from "@/modules/ai/domain/food-estimate";
 import { getUserSettings } from "@/modules/settings/repository";
 import { analysisAlreadySaved, findAnalysis, insertAnalysis, markAnalysisFailed, markAnalysisSucceeded } from "./photo-repository";
@@ -62,7 +63,18 @@ export async function analyzeFoodPhoto(userId: string, input: { bytes: Uint8Arra
     await markAnalysisFailed(analysisId, message);
     if (error instanceof AppError) throw error;
     console.error("[photo-analysis] failed", error);
-    throw new AppError("internal", "The estimate failed. Try again, or log the meal by hand.");
+    switch (classifyAiError({ status: statusOf(error), message })) {
+      case "auth":
+        throw new AppError("conflict", "The AI service rejected the API key. Check ANTHROPIC_API_KEY in the project settings.");
+      case "model":
+        throw new AppError("conflict", "The AI model was not found. Check ANTHROPIC_MODEL, or remove it to use the default.");
+      case "credit":
+        throw new AppError("conflict", "The AI account has no credit left. Add credit in the Anthropic console.");
+      case "busy":
+        throw new AppError("conflict", "The AI service is busy. Try again in a moment.");
+      default:
+        throw new AppError("internal", "The estimate failed. Try again, or log the meal by hand.");
+    }
   }
 }
 

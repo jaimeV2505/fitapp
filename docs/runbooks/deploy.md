@@ -110,5 +110,6 @@ Two things are never in the zips that accompany a session: `drizzle/` (migration
 | Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
 | "Invalid origin" on sign-in | You opened an address that is not `BETTER_AUTH_URL` (no trailing slash, `https://`). The app also trusts Vercel's own addresses for the project; set `BETTER_AUTH_URL` to your main domain and redeploy. |
 | Food photo: "Photo storage is not set up" (or a generic "Something went wrong" on older builds) | Vercel Blob is not connected: Storage -> Create -> Blob, connect it to the project (adds `BLOB_STORE_ID`; current stores authenticate with OIDC, no token needed) and redeploy. The app uses `@vercel/blob` 2.6 or newer and works with public and private stores. |
+| Food photo fails with "tool_choice ... not supported for this model" | Fixed: the request no longer forces the tool. Check an AI setup change with `pnpm ai:check` (it prints the model and whether the call works). |
 | Food photo times out | Check `ANTHROPIC_API_KEY`; the page allows 60 s (`maxDuration`). |
 | Photos do not load | `STORAGE_DRIVER=vercel-blob` and a connected Blob store are required in production. |
