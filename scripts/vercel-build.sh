@@ -6,8 +6,10 @@
 set -eu
 
 if [ "${VERCEL_ENV:-}" = "production" ]; then
+  echo "[vercel-build] Production: checking the database connection..."
+  pnpm db:check
   echo "[vercel-build] Production: applying migrations..."
-  pnpm db:migrate
+  pnpm db:migrate:ci
   echo "[vercel-build] Production: seeding catalogs (idempotent)..."
   pnpm db:seed
 else

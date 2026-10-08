@@ -85,7 +85,8 @@ Preview deployments need `DATABASE_URL` (a separate database or Neon branch, nev
 | Symptom | Likely cause |
 |---------|--------------|
 | Build fails with a TypeScript error | Run `docker compose exec app pnpm typecheck` locally and fix it. |
-| Build fails at `db:migrate` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
+| Build fails at `db:check` | The log names the host and the likely cause (wrong password, deleted database, two variables pointing at different databases, unreachable). Fix the variables in Vercel and redeploy. |
+| Build fails at `db:migrate:ci` | `drizzle/` not committed, or the database is not connected to the project. Check the build log. |
 | Build fails with "Invalid environment configuration" | A required variable is missing for that environment (Preview needs `DATABASE_URL` and `BETTER_AUTH_SECRET`). |
 | "Invalid origin" on sign-in | You opened an address that is not `BETTER_AUTH_URL` (no trailing slash, `https://`). The app also trusts Vercel's own addresses for the project; set `BETTER_AUTH_URL` to your main domain and redeploy. |
 | Food photo times out | Check `ANTHROPIC_API_KEY`; the page allows 60 s (`maxDuration`). |
