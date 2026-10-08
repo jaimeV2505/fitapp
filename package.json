@@ -32,13 +32,15 @@
     "db:clean-e2e": "sh scripts/clean-e2e-users.sh",
     "db:check": "tsx scripts/db-check.ts",
     "db:migrate:ci": "tsx scripts/db-migrate.ts",
-    "check:migrations": "sh scripts/check-migrations.sh"
+    "check:migrations": "sh scripts/check-migrations.sh",
+    "model:check": "tsx scripts/check-anatomy-model.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
     "@gsap/react": "^2.1.2",
     "@number-flow/react": "^0.5.0",
     "@radix-ui/react-slot": "^1.2.0",
+    "@react-three/fiber": "^9.0.0",
     "@vercel/blob": "^1.1.0",
     "better-auth": "^1.3.0",
     "canvas-confetti": "^1.9.3",
@@ -58,6 +60,7 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.0",
     "tailwind-merge": "^3.3.0",
+    "three": "^0.170.0",
     "vaul": "^1.1.2",
     "zod": "^4.0.0"
   },
@@ -68,6 +71,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/three": "^0.170.0",
     "dotenv": "^17.0.0",
     "drizzle-kit": "^0.31.0",
     "eslint": "^9.0.0",

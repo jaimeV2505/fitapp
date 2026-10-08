@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BASE_EXERCISES } from "@/data/starter/base-exercises";
 import { EXERCISE_CATALOG } from "@/data/starter/exercise-catalog";
 import { FOOD_CATALOG } from "@/data/starter/food-catalog";
 import { STARTER_MEAL_TEMPLATES } from "@/data/starter/meal-templates";
@@ -10,6 +11,11 @@ describe("Spanish names of the built-in content", () => {
 
   it("cover every exercise of the starter routine", () => {
     expect(missing(EXERCISE_CATALOG.map((e) => e.name))).toEqual([]);
+  });
+
+  it("cover every base exercise", () => {
+    expect(missing(BASE_EXERCISES.map((e) => e.name))).toEqual([]);
+    expect(localizeName("Barbell Bench Press", "es")).toBe("Press de banca con barra");
   });
 
   it("cover every plan day name and focus", () => {

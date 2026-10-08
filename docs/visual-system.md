@@ -26,6 +26,15 @@ The look comes from the engraved gym illustrations (navy ink, hatching) and the 
 | Optional plate "clack" when a set is completed (synthesised, off by default) | Logger, switch on Profile | `lib/sound.ts`, `app/(app)/profile/sound-toggle.tsx` |
 | Day colour bar: each training day carries its plate colour | Logger header | `workout-logger.tsx` |
 
+## The 3D body
+
+The muscle heat map on Progress has a **2D | 3D** switch (shown only where the browser supports WebGL).
+
+- **What it does:** drag to rotate, pinch to zoom, Front/Back buttons, tap a muscle to read its sets this week. Muscles warm up from the neutral tone to their heat colour when the view opens.
+- **Two bodies, one viewer:** without a model file a stylised body made of ellipsoids is drawn (`domain/body-parts.ts`). If `public/models/anatomy.glb` exists it is used instead, with its meshes matched to our 12 muscle groups by name (`domain/glb.ts`). See `public/models/README.md` for the format, where to get a model, licences, and `pnpm model:check`.
+- **Cost:** the 3D engine (three.js, react-three-fiber) is downloaded only when someone taps 3D. The scene draws only while something moves, so it does not drain the battery. If anything fails (no WebGL, a bad model file) it falls back to the flat map.
+- **Files:** `modules/analytics/components/body3d/` (viewer, scene parts, error boundary, config with the model URL and the credit line).
+
 ## Rules
 
 - Motion respects the OS "reduce motion" setting (`MotionConfig reducedMotion="user"`): transforms collapse, information stays.

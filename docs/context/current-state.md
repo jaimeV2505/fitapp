@@ -66,6 +66,13 @@ Last updated: 2026-10-08 (session 6)
 See `docs/visual-system.md`: depth/grain/slab surfaces, ink stamp, sparklines, plate calculator + warm-ups, week-as-plates, muscle heat map, gold PR plate, shareable workout image, food scan effect, optional plate sound, day colour bar. Pure logic is unit-tested (plates, warm-ups, heat levels, week wheel, trends, sparkline math); the screens and the new SQL (`getExerciseTrendRows`, `listCompletedDates`) have not been run.
 - Not done: shared-element transition (see backlog).
 
+## Session 10: 3D body and a big exercise base (written; install, then run typecheck/lint/test)
+
+- **Exercises**: `data/starter/base-exercises.ts` holds 287 curated exercises (22 to 26 per muscle, with Spanish names). `ensureBaseExercises` (run by `db:seed`, so by every production build) tops up only what is missing so every muscle has at least 20 built-in exercises in the picker, without duplicating the library. They have no photos or instructions (the library ones do).
+- **3D body** (`docs/visual-system.md`): react-three-fiber viewer on Progress, stylised body by default, a real `public/models/anatomy.glb` is picked up automatically (names matched in `domain/glb.ts`; `pnpm model:check`). **New dependencies**: `three`, `@react-three/fiber`, `@types/three`: update and commit `pnpm-lock.yaml`.
+- No real anatomy model is bundled (it could not be downloaded where this was written): the model, its licence and `MODEL_CREDIT` are still to do.
+- Unverified: the 3D scene, its dependencies with React 19.2 / Next 16 / Turbopack, and the seed top-up against a real database.
+
 ## Verified
 
 - Pure code compiled with TypeScript strict + `noUncheckedIndexedAccess` and unit tests run (116 tests: blueprint, metrics, formatting, prefill, logger state, persistent queue, sync engine, time helpers, exercise history, week filling).

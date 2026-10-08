@@ -80,6 +80,10 @@ Preview deployments need `DATABASE_URL` (a separate database or Neon branch, nev
 - Backups: use the provider's point-in-time recovery plus a scheduled dump (see `database.md`).
 - Vercel Hobby is for personal, non-commercial use. Move to Pro before charging users.
 
+## Adding a dependency
+
+The Vercel build installs with `--frozen-lockfile`, so a new dependency in `package.json` needs an updated `pnpm-lock.yaml` **in the same commit**. Run `docker compose exec app pnpm install`, check that `pnpm-lock.yaml` changed, and commit both files. Otherwise the build fails at install.
+
 ## Never lose the migrations
 
 The Vercel build needs `drizzle/` (it applies the migrations before publishing). If a commit deletes that folder the deploy fails with `Could not find drizzle/meta/_journal.json`. Protect yourself:

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHeatMap, heatLevel } from "./heat";
+import { HEAT_COLORS, buildHeatMap, heatColor, heatLevel } from "./heat";
 
 describe("heatLevel", () => {
   it("maps weekly sets to six levels", () => {
@@ -17,5 +17,13 @@ describe("buildHeatMap", () => {
     expect(cells.find((c) => c.muscle === "chest")).toEqual({ muscle: "chest", sets: 16, level: 4 });
     expect(cells.find((c) => c.muscle === "back")?.level).toBe(2);
     expect(cells.find((c) => c.muscle === "calves")).toEqual({ muscle: "calves", sets: 0, level: 0 });
+  });
+});
+
+describe("heatColor", () => {
+  it("has no colour for untouched muscles and one of five colours for the rest", () => {
+    expect(heatColor(0)).toBeNull();
+    expect(heatColor(1)).toBe(HEAT_COLORS[0]);
+    expect(heatColor(5)).toBe(HEAT_COLORS[4]);
   });
 });

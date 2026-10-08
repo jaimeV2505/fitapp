@@ -3,12 +3,9 @@
 import Model from "react-body-highlighter";
 import { useTheme } from "next-themes";
 import { toBodyMuscles } from "@/lib/muscles";
-import type { HeatCell } from "../domain/heat";
+import { HEAT_COLORS, type HeatCell } from "../domain/heat";
 
 type ModelData = React.ComponentProps<typeof Model>["data"];
-
-/** Cool to hot: the same order as the colour of the plates (blue, green, yellow) continuing into orange and red. */
-export const HEAT_COLORS = ["#4c7bea", "#2fb56f", "#f4c531", "#f08a24", "#e5483d"] as const;
 
 /**
  * Front and back of the body, each muscle coloured by its weekly volume.

@@ -8,7 +8,7 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import { user } from "../src/lib/db/schema";
 import { env } from "../src/lib/env";
-import { ensureBuiltInExercises, ensureLibraryExercises } from "../src/modules/exercises/catalog";
+import { ensureBaseExercises, ensureBuiltInExercises, ensureLibraryExercises } from "../src/modules/exercises/catalog";
 import { ensureBuiltInFoods } from "../src/modules/foods/catalog";
 import { ensureUserProvisioned } from "../src/modules/users/provisioning";
 
@@ -18,6 +18,8 @@ async function main(): Promise<void> {
   console.log(`Catalog ready: ${exerciseIds.size} exercises, ${foodIds.size} foods.`);
   const libraryAdded = await ensureLibraryExercises(db);
   if (libraryAdded > 0) console.log(`Exercise library: added ${libraryAdded} exercises.`);
+  const baseAdded = await ensureBaseExercises(db);
+  if (baseAdded > 0) console.log(`Base exercises: added ${baseAdded} so every muscle has at least 20.`);
 
   const users = await db.select({ id: user.id, email: user.email }).from(user);
   if (users.length === 0) {

@@ -1,3 +1,4 @@
+import { BASE_EXERCISES } from "@/data/starter/base-exercises";
 import type { Locale } from "./config";
 
 /**
@@ -71,8 +72,10 @@ const ES: Readonly<Record<string, string>> = {
   liquid: "Líquido",
 };
 
+const BASE_ES: Readonly<Record<string, string>> = Object.fromEntries(BASE_EXERCISES.map((exercise) => [exercise.name, exercise.nameEs]));
+
 export function localizeName(name: string, locale: Locale): string {
-  return locale === "es" ? (ES[name] ?? name) : name;
+  return locale === "es" ? (ES[name] ?? BASE_ES[name] ?? name) : name;
 }
 
-export const SPANISH_NAMES = ES;
+export const SPANISH_NAMES: Readonly<Record<string, string>> = { ...BASE_ES, ...ES };

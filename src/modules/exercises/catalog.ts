@@ -1,9 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { DbExecutor } from "@/lib/db";
 import { exerciseMuscles, exercises } from "@/lib/db/schema";
+import { BASE_EXERCISES } from "@/data/starter/base-exercises";
 import { EXERCISE_CATALOG } from "@/data/starter/exercise-catalog";
 import { EXERCISE_LIBRARY } from "@/data/starter/exercise-library";
 import { EXERCISE_MEDIA } from "@/data/starter/exercise-media";
+import { selectBaseExercises } from "./domain/base-selection";
 
 /**
  * Inserts any built-in exercise that does not exist yet. Idempotent.
@@ -102,5 +104,47 @@ export async function ensureLibraryExercises(executor: DbExecutor): Promise<numb
     });
     if (muscles.length > 0) await executor.insert(exerciseMuscles).values(muscles).onConflictDoNothing();
   }
+  return missing.length;
+}
+
+/**
+ * Makes sure every muscle group has at least 20 built-in exercises to pick from when editing a routine: adds, from
+ * the curated reserve, only what the library and the starter catalog do not already cover. Idempotent.
+ */
+export async function ensureBaseExercises(executor: DbExecutor): Promise<number> {
+  const existing = await executor
+    .select({ slug: exercises.slug, name: exercises.name, primaryMuscle: exercises.primaryMuscle, archivedAt: exercises.archivedAt })
+    .from(exercises)
+    .where(isNull(exercises.ownerId));
+
+  const missing = selectBaseExercises(
+    BASE_EXERCISES,
+    existing.map((row) => ({ slug: row.slug, name: row.name, primaryMuscle: row.primaryMuscle, archived: row.archivedAt !== null })),
+  );
+  if (missing.length === 0) return 0;
+
+  const inserted = await executor
+    .insert(exercises)
+    .values(
+      missing.map((entry) => ({
+        ownerId: null,
+        slug: entry.slug,
+        name: entry.name,
+        primaryMuscle: entry.primaryMuscle,
+        movementType: entry.movementType,
+        equipment: entry.equipment,
+        defaultSets: entry.defaultSets,
+        defaultRepMin: entry.defaultRepMin,
+        defaultRepMax: entry.defaultRepMax,
+      })),
+    )
+    .returning({ id: exercises.id, slug: exercises.slug });
+
+  const idBySlug = new Map(inserted.map((row) => [row.slug, row.id]));
+  const muscles = missing.flatMap((entry) => {
+    const exerciseId = idBySlug.get(entry.slug);
+    return exerciseId ? entry.secondaryMuscles.map((muscle) => ({ exerciseId, muscle })) : [];
+  });
+  if (muscles.length > 0) await executor.insert(exerciseMuscles).values(muscles).onConflictDoNothing();
   return missing.length;
 }

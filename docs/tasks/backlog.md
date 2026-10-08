@@ -9,6 +9,9 @@
 6. Onboarding and billing (only when opening to others)
 
 ## Phase 1
+- [ ] Get a real anatomy model (Z-Anatomy / BodyParts3D / paid), prepare it, `pnpm model:check`, add `public/models/anatomy.glb` and `MODEL_CREDIT`
+- [ ] 3D: tap a muscle to open the exercises that train it; exercise detail highlights its muscles in 3D
+- [ ] Photos and instructions for the base exercises (an AI-written or licensed set), Spanish instructions
 - [ ] Shared-element transition: exercise detail as a full page route so the thumbnail can grow into the photo
 - [ ] Lote 1 leftovers: streaks and consistency calendar, repeat yesterday's meal / favourites
 - [ ] Verify region match (Neon vs. Vercel functions) and measure again
